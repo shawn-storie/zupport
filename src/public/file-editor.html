@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zupport File Editor</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #container {
+            display: flex;
+            flex-grow: 1;
+        }
+        #file-list {
+            width: 200px;
+            border-right: 1px solid #ccc;
+            padding-right: 20px;
+            overflow-y: auto;
+        }
+        #editor-container {
+            flex-grow: 1;
+            height: 100%;
+        }
+        .file-entry {
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .file-entry:hover {
+            text-decoration: underline;
+        }
+        h2 {
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .back-link {
+            color: #3498db;
+            text-decoration: none;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        #save-button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #save-button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">&lt; Back to Main Menu</a>
+    <div id="container">
+        <div id="file-list" hx-get="/editable-files" hx-trigger="load">
+            Loading files...
+        </div>
+        <div id="editor-container"></div>
+    </div>
+    <button id="save-button" style="display: none;">Save</button>
+    <script>
+        let editor;
+        let currentFile;
+
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+        require(["vs/editor/editor.main"], function () {
+            editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: "Select a file to edit",
+                language: "plaintext",
+                theme: "vs-dark"
+            });
+
+            window.addEventListener('resize', function () {
+                editor.layout();
+            });
+        });
+
+        htmx.on('htmx:afterSettle', function(evt) {
+            if (evt.detail.target.id === 'file-list') {
+                document.querySelectorAll('.file-entry').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        currentFile = this.textContent.trim();
+                        fetch('/file-content?file=' + encodeURIComponent(currentFile))
+                            .then(response => response.json())
+                            .then(data => {
+                                editor.setValue(data.content);
+                                document.getElementById('save-button').style.display = 'block';
+                            });
+                    });
+                });
+            }
+        });
+
+        document.getElementById('save-button').addEventListener('click', function() {
+            if (currentFile) {
+                fetch('/edit-file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        filePath: currentFile,
+                        content: editor.getValue()
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message || 'File saved successfully');
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    alert('An error occurred while saving the file');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
