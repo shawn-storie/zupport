@@ -1,6 +1,6 @@
-# Zupport API
+# Zupport
 
-Zupport API is a comprehensive Node.js-based solution for log streaming, file editing, server health monitoring, and command execution. It provides both a RESTful API and a web interface for easy interaction.
+Zupport is a comprehensive Node.js-based solution for log streaming, file editing, server health monitoring, and command execution. It provides both a RESTful API and a web interface for easy interaction.
 
 ## Table of Contents
 
