@@ -1,6 +1,6 @@
-# Zupport
+# Zupport API
 
-Zupport is a comprehensive Node.js-based solution for log streaming, file editing, server health monitoring, and command execution. It provides both a RESTful API and a web interface for easy interaction.
+Zupport API is a comprehensive Node.js-based solution for log streaming, file editing, server health monitoring, and command execution. It provides both a RESTful API and a web interface for easy interaction.
 
 ## Table of Contents
 
@@ -10,9 +10,10 @@ Zupport is a comprehensive Node.js-based solution for log streaming, file editin
 - [API Endpoints](#api-endpoints)
 - [Web Interface](#web-interface)
 - [Configuration](#configuration)
-- [Initializing Sample Logs](#initializing-sample-logs)
+- [Logging](#logging)
 - [Examples](#examples)
-
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 
@@ -23,13 +24,14 @@ Zupport is a comprehensive Node.js-based solution for log streaming, file editin
 - Web interface for easy interaction
 - RESTful API for programmatic access
 - OpenAPI documentation
+- Winston-based logging with customizable log levels
 
 ## Installation
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/shawn-storie/zupport.git
-   cd zupport-api
+   cd zupport
    ```
 
 2. Install dependencies:
@@ -42,11 +44,10 @@ Zupport is a comprehensive Node.js-based solution for log streaming, file editin
    export ZUPPORT_LOG_DIR=/path/to/logs
    export ZUPPORT_EDITABLE_DIR=/path/to/editable/files
    export PORT=3000
+   export LOG_LEVEL=info
    ```
 
-4. Initialize sample logs (optional, see [Initializing Sample Logs](#initializing-sample-logs) section)
-
-5. Start the server:
+4. Start the server:
    ```bash
    npm start
    ```
@@ -87,35 +88,24 @@ The web interface provides easy access to all features:
 The following environment variables can be used to configure the server:
 
 - `PORT`: The port number for the server (default: 3000)
-- `ZUPPORT_LOG_DIR`: Directory containing log files (default: `<package_root>/logs`)
+- `ZUPPORT_LOG_DIR`: Directory containing log files (default: `<project_root>/logs`)
 - `ZUPPORT_EDITABLE_DIR`: Directory containing editable files (default: current working directory)
+- `LOG_LEVEL`: Logging level (default: 'info', options: 'error', 'warn', 'info', 'http', 'debug')
 
-Note: If `ZUPPORT_LOG_DIR` is not set, the API will look for logs in a `logs` directory within the package root. Make sure this directory exists or create it before running the server.
+## Logging
 
-## Initializing Sample Logs
+Zupport API uses Winston for logging. Log files are stored in the specified log directory:
 
-To help you get started quickly, we've provided a script to initialize the logs directory with sample log files. Here's how to use it:
+- `error.log`: Contains only error-level logs
+- `combined.log`: Contains all logs
 
-1. Make sure you're in the root directory of the project.
-2. Run the following command to make the script executable:
+In non-production environments, logs are also output to the console with color-coding.
 
-   ```bash
-   chmod +x init_logs.sh
-   ```
+To change the log level:
 
-3. Run the script:
-
-   ```bash
-   ./init_logs.sh
-   ```
-
-This script will create a `logs` directory (if it doesn't already exist) and populate it with three sample log files:
-
-- `application.log`: Contains general application events.
-- `access.log`: Simulates an HTTP access log.
-- `error.log`: Contains sample error messages.
-
-These sample logs can be useful for testing the log streaming functionality of the Zupport API.
+```bash
+LOG_LEVEL=debug npm start
+```
 
 ## Examples
 
@@ -183,3 +173,4 @@ fetch('http://localhost:3000/execute', {
 .then(data => console.log(data.stdout))
 .catch(error => console.error('Error:', error));
 ```
+
