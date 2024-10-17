@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zupport Log Viewer</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: black;
+            color: #00ff00;
+            padding: 20px;
+            margin: 0;
+        }
+        #container {
+            display: flex;
+            height: 100vh;
+        }
+        #log-list {
+            width: 200px;
+            border-right: 1px solid #00ff00;
+            padding-right: 20px;
+            overflow-y: auto;
+        }
+        #log-content {
+            flex-grow: 1;
+            padding-left: 20px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .log-entry {
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .log-entry:hover {
+            text-decoration: underline;
+        }
+        h2 {
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 10px;
+        }
+        .back-link {
+            color: #00ff00;
+            text-decoration: none;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">&lt; Back to Main Menu</a>
+    <div id="container">
+        <div id="log-list" hx-get="/logs" hx-trigger="load">
+            Loading logs...
+        </div>
+        <div id="log-content">
+            Select a log to view its content.
+        </div>
+    </div>
+    <script>
+        htmx.on('#log-content', 'htmx:wsAfterMessage', function(evt) {
+            const logContent = document.getElementById('log-content');
+            logContent.scrollTop = logContent.scrollHeight;
+        });
+    </script>
+</body>
+</html>
