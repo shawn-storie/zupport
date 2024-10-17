@@ -12,8 +12,7 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
 - [Configuration](#configuration)
 - [Initializing Sample Logs](#initializing-sample-logs)
 - [Examples](#examples)
-- [Contributing](#contributing)
-- [License](#license)
+
 
 ## Features
 
