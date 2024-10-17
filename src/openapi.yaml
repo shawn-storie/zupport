@@ -1,0 +1,86 @@
+openapi: 3.0.0
+info:
+  title: Zupport API
+  version: 1.0.0
+  description: API for streaming logs, editing files, checking server health, and executing commands
+
+paths:
+  /logs:
+    get:
+      summary: Get list of available log files
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      type: string
+
+  /edit-file:
+    post:
+      summary: Edit a file on the server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filePath:
+                  type: string
+                content:
+                  type: string
+      responses:
+        '200':
+          description: File edited successfully
+
+  /health:
+    get:
+      summary: Get server health information
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                : '#/components/schemas/HealthInfo'
+
+  /execute:
+    post:
+      summary: Execute a command on the server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+      responses:
+        '200':
+          description: Command executed successfully
+
+components:
+  schemas:
+    HealthInfo:
+      type: object
+      properties:
+        uptime:
+          type: number
+        message:
+          type: string
+        timestamp:
+          type: number
+        cpuUsage:
+          type: object
+        memoryUsage:
+          type: object
+        osInfo:
+          type: object
+
