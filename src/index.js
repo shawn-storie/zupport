@@ -7,7 +7,7 @@ const { exec } = require('child_process');
 const os = require('os');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
-const logger = require('./logger');
+const winston = require('winston');
 
 /**
  * Creates and configures the Zupport API server
@@ -20,6 +20,26 @@ function createZupportApi(options = {}) {
   const port = options.port || process.env.PORT || 3000;
   const logDir = process.env.ZUPPORT_LOG_DIR || path.join(__dirname, '..', 'logs');
   const editableDir = process.env.ZUPPORT_EDITABLE_DIR || process.cwd();
+
+  // Configure Winston logger
+  const logger = winston.createLogger({
+    level: process.env.LOG_LEVEL || 'info',
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.json()
+    ),
+    transports: [
+      new winston.transports.File({ filename: path.join(logDir, 'error.log'), level: 'error' }),
+      new winston.transports.File({ filename: path.join(logDir, 'combined.log') }),
+    ],
+  });
+
+  // If we're not in production, also log to the console
+  if (process.env.NODE_ENV !== 'production') {
+    logger.add(new winston.transports.Console({
+      format: winston.format.simple(),
+    }));
+  }
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
