@@ -20,7 +20,9 @@ function createZupportApi(options = {}) {
   const port = options.port || process.env.PORT || 3000;
   const logDir = process.env.ZUPPORT_LOG_DIR || path.join(__dirname, '..', 'logs');
   const editableDir = process.env.ZUPPORT_EDITABLE_DIR || process.cwd();
-
+  const logLevel = process.env.LOG_LEVEL || 'info';
+  const consoleLogging = process.env.CONSOLE_LOGGING === 'true' || process.env.NODE_ENV !== 'production';
+  
   // Configure Winston logger
   const logger = winston.createLogger({
     level: process.env.LOG_LEVEL || 'info',
@@ -34,8 +36,8 @@ function createZupportApi(options = {}) {
     ],
   });
 
-  // If we're not in production, also log to the console
-  if (process.env.NODE_ENV !== 'production') {
+  // If we're not in production, or CONSOLE_LOGGING is true then also log to the console
+  if (consoleLogging) {
     logger.add(new winston.transports.Console({
       format: winston.format.simple(),
     }));
@@ -258,14 +260,13 @@ function createZupportApi(options = {}) {
   });
 
   /**
-   * Route to get server health
-   * @route GET /health
-   * @returns {Object} JSON object containing server health information or HTML content
+   * Route to get server stats
+   * @route GET /server-stats
+   * @returns {Object} JSON object containing server stats or HTML content
    */
-  app.get('/health', (req, res) => {
-    const health = {
+  app.get('/server-stats', (req, res) => {
+    const stats = {
       uptime: process.uptime(),
-      message: 'OK',
       timestamp: Date.now(),
       cpuUsage: process.cpuUsage(),
       memoryUsage: process.memoryUsage(),
@@ -279,13 +280,19 @@ function createZupportApi(options = {}) {
     
     if (shouldRespondWithHtml(req)) {
       res.send(`
-        <div hx-swap-oob="true" id="health">
-          <h2>Server Health</h2>
-          <pre>${JSON.stringify(health, null, 2)}</pre>
+        <div id="server-stats">
+          <h2>Server Stats</h2>
+          <p>Uptime: ${stats.uptime.toFixed(2)} seconds</p>
+          <p>CPU Usage: ${JSON.stringify(stats.cpuUsage)}</p>
+          <p>Memory Usage: ${JSON.stringify(stats.memoryUsage)}</p>
+          <p>Total Memory: ${stats.osInfo.totalMem} bytes</p>
+          <p>Free Memory: ${stats.osInfo.freeMem} bytes</p>
+          <p>Platform: ${stats.osInfo.platform}</p>
+          <p>OS Version: ${stats.osInfo.version}</p>
         </div>
       `);
     } else {
-      res.json(health);
+      res.json(stats);
     }
   });
 
