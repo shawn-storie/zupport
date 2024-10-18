@@ -161,4 +161,81 @@ When adding new features or modifying existing ones, make sure to update or add 
 
 ## Examples
 
-... (rest of the README remains the same)
+### Fetching Log Files
+
+```javascript
+fetch('http://localhost:3000/logs')
+  .then(response => response.json())
+  .then(data => console.log(data.logs))
+  .catch(error => console.error('Error:', error));
+```
+
+### Streaming Logs via WebSocket
+
+```javascript
+const ws = new WebSocket('ws://localhost:3000/ws?log=application.log');
+
+ws.onmessage = function(event) {
+  const logEntry = JSON.parse(event.data);
+  console.log(`${logEntry.timestamp}: ${logEntry.message}`);
+};
+```
+
+### Editing a File
+
+```javascript
+fetch('http://localhost:3000/edit-file', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    filePath: 'config.json',
+    content: JSON.stringify({ key: 'value' }, null, 2)
+  }),
+})
+.then(response => response.json())
+.then(data => console.log(data.message))
+.catch(error => console.error('Error:', error));
+```
+
+### Checking Server Health
+
+```javascript
+fetch('http://localhost:3000/health')
+  .then(response => response.json())
+  .then(data => {
+    console.log(`Uptime: ${data.uptime} seconds`);
+    console.log(`Free Memory: ${data.osInfo.freeMem} bytes`);
+  })
+  .catch(error => console.error('Error:', error));
+```
+
+### Executing a Command
+
+```javascript
+fetch('http://localhost:3000/execute', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ command: 'echo "Hello, World!"' }),
+})
+.then(response => response.json())
+.then(data => console.log(data.stdout))
+.catch(error => console.error('Error:', error));
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
