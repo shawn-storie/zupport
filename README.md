@@ -11,6 +11,7 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
 - [Web Interface](#web-interface)
 - [Configuration](#configuration)
 - [Logging](#logging)
+- [Version Management](#version-management)
 - [Testing](#testing)
 - [Examples](#examples)
 - [Contributing](#contributing)
@@ -27,6 +28,8 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
 - OpenAPI documentation
 - Winston-based logging with customizable log levels
 - Automated testing with Jest and Supertest
+- Server stats viewing with HTMX integration, including disk usage
+- API version endpoint
 
 ## Installation
 
@@ -47,6 +50,7 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
    export ZUPPORT_EDITABLE_DIR=/path/to/editable/files
    export PORT=3000
    export LOG_LEVEL=info
+   export CONSOLE_LOGGING=true
    ```
 
 4. Start the server:
@@ -69,6 +73,8 @@ For programmatic access, you can use the API endpoints directly. Refer to the [A
 - `POST /edit-file`: Edit a file
 - `GET /health`: Get server health information
 - `POST /execute`: Execute a command on the server
+- `GET /server-stats`: Get detailed server statistics including disk usage (supports both JSON and HTMX responses)
+- `GET /version`: Get the current API version (supports both JSON and HTMX responses)
 
 For detailed API documentation, visit `/api-docs` on the running server.
 
@@ -84,6 +90,7 @@ The web interface provides easy access to all features:
    - Edit files using Monaco Editor
 3. **Server Health**: View detailed server health information
 4. **Command Execution**: Run commands on the server and view output
+5. **Server Stats**: View real-time server statistics using HTMX
 
 ## Configuration
 
@@ -93,6 +100,7 @@ The following environment variables can be used to configure the server:
 - `ZUPPORT_LOG_DIR`: Directory containing log files (default: `<project_root>/logs`)
 - `ZUPPORT_EDITABLE_DIR`: Directory containing editable files (default: current working directory)
 - `LOG_LEVEL`: Logging level (default: 'info')
+- `CONSOLE_LOGGING`: Enable console logging even in production (default: 'false' in production, 'true' otherwise)
 
 ### Log Levels
 
@@ -121,15 +129,27 @@ Zupport API uses Winston for logging. Log files are stored in the specified log 
 - `error.log`: Contains only error-level logs
 - `combined.log`: Contains all logs
 
-In non-production environments, logs are also output to the console with color-coding.
+Console logging behavior depends on the environment and configuration:
+- In non-production environments, logs are output to the console by default.
+- In production, console logging is disabled by default but can be enabled with the `CONSOLE_LOGGING` environment variable.
 
-To change the log level:
+To change the log level and enable console logging in production:
 
 ```bash
-LOG_LEVEL=debug npm start
+LOG_LEVEL=debug CONSOLE_LOGGING=true npm start
 ```
 
-This will show all logs up to and including debug level. Adjust the `LOG_LEVEL` value as needed for your desired level of logging detail.
+This will set the log level to debug and enable console logging, even in a production environment.
+
+## Version Management
+
+The Zupport API version is managed in the `package.json` file. A `version.js` file is automatically generated based on this version to ensure consistency across the package. When updating the version:
+
+1. Modify the version in `package.json`
+2. Run `npm run generate-version` (this is also automatically run before publishing)
+3. Commit these changes with a version bump commit message
+
+This approach ensures that the version is correctly reported even when the package is installed as a dependency in other projects. The `version.js` file is automatically generated before the package is published, ensuring it always matches the version in `package.json`.
 
 ## Testing
 
@@ -199,32 +219,35 @@ fetch('http://localhost:3000/edit-file', {
 .catch(error => console.error('Error:', error));
 ```
 
-### Checking Server Health
+### Fetching Server Stats
 
 ```javascript
-fetch('http://localhost:3000/health')
+fetch('http://localhost:3000/server-stats')
   .then(response => response.json())
-  .then(data => {
-    console.log(`Uptime: ${data.uptime} seconds`);
-    console.log(`Free Memory: ${data.osInfo.freeMem} bytes`);
-  })
+  .then(data => console.log(data))
   .catch(error => console.error('Error:', error));
 ```
 
-### Executing a Command
+### Fetching API Version
 
 ```javascript
-fetch('http://localhost:3000/execute', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({ command: 'echo "Hello, World!"' }),
-})
-.then(response => response.json())
-.then(data => console.log(data.stdout))
-.catch(error => console.error('Error:', error));
+fetch('http://localhost:3000/version')
+  .then(response => response.json())
+  .then(data => console.log(data.version))
+  .catch(error => console.error('Error:', error));
 ```
+
+For HTMX integration, simply use the provided links in the web interface, or add the following to your HTML:
+
+```html
+<a href="#" hx-get="/server-stats" hx-target="#stats-container" hx-trigger="click">View Server Stats</a>
+<div id="stats-container"></div>
+
+<a href="#" hx-get="/version" hx-target="#version-container" hx-trigger="click">View API Version</a>
+<div id="version-container"></div>
+```
+
+This will fetch and display the server stats and API version when the respective links are clicked, without reloading the page.
 
 ## Contributing
 
@@ -238,4 +261,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
