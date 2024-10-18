@@ -11,6 +11,7 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
 - [Web Interface](#web-interface)
 - [Configuration](#configuration)
 - [Logging](#logging)
+- [Testing](#testing)
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
@@ -25,6 +26,7 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
 - RESTful API for programmatic access
 - OpenAPI documentation
 - Winston-based logging with customizable log levels
+- Automated testing with Jest and Supertest
 
 ## Installation
 
@@ -129,69 +131,34 @@ LOG_LEVEL=debug npm start
 
 This will show all logs up to and including debug level. Adjust the `LOG_LEVEL` value as needed for your desired level of logging detail.
 
+## Testing
+
+Zupport API uses Jest for unit and integration testing, along with Supertest for API testing.
+
+### Test Location
+
+Test files are located in the `__tests__` directory in the project root. Each test file typically corresponds to a feature or a group of related features.
+
+### Running Tests
+
+To run all tests:
+
+```bash
+npm test
+```
+
+To run tests with coverage report:
+
+```bash
+npm run test:coverage
+```
+
+This will generate a coverage report in the `coverage` directory.
+
+### Writing Tests
+
+When adding new features or modifying existing ones, make sure to update or add corresponding tests in the `__tests__` directory. Follow the existing test patterns and use Jest's assertion methods to verify expected behaviors.
+
 ## Examples
 
-### Fetching Log Files
-
-```javascript
-fetch('http://localhost:3000/logs')
-  .then(response => response.json())
-  .then(data => console.log(data.logs))
-  .catch(error => console.error('Error:', error));
-```
-
-### Streaming Logs via WebSocket
-
-```javascript
-const ws = new WebSocket('ws://localhost:3000/ws?log=application.log');
-
-ws.onmessage = function(event) {
-  const logEntry = JSON.parse(event.data);
-  console.log(`${logEntry.timestamp}: ${logEntry.message}`);
-};
-```
-
-### Editing a File
-
-```javascript
-fetch('http://localhost:3000/edit-file', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    filePath: 'config.json',
-    content: JSON.stringify({ key: 'value' }, null, 2)
-  }),
-})
-.then(response => response.json())
-.then(data => console.log(data.message))
-.catch(error => console.error('Error:', error));
-```
-
-### Checking Server Health
-
-```javascript
-fetch('http://localhost:3000/health')
-  .then(response => response.json())
-  .then(data => {
-    console.log(`Uptime: ${data.uptime} seconds`);
-    console.log(`Free Memory: ${data.osInfo.freeMem} bytes`);
-  })
-  .catch(error => console.error('Error:', error));
-```
-
-### Executing a Command
-
-```javascript
-fetch('http://localhost:3000/execute', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({ command: 'echo "Hello, World!"' }),
-})
-.then(response => response.json())
-.then(data => console.log(data.stdout))
-.catch(error => console.error('Error:', error));
-```
+... (rest of the README remains the same)
