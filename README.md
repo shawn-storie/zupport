@@ -90,7 +90,27 @@ The following environment variables can be used to configure the server:
 - `PORT`: The port number for the server (default: 3000)
 - `ZUPPORT_LOG_DIR`: Directory containing log files (default: `<project_root>/logs`)
 - `ZUPPORT_EDITABLE_DIR`: Directory containing editable files (default: current working directory)
-- `LOG_LEVEL`: Logging level (default: 'info', options: 'error', 'warn', 'info', 'http', 'debug')
+- `LOG_LEVEL`: Logging level (default: 'info')
+
+### Log Levels
+
+The `LOG_LEVEL` environment variable can be set to one of the following values, in order of increasing verbosity:
+
+1. `error`: Only log errors
+2. `warn`: Log warnings and errors
+3. `info`: Log info, warnings, and errors (default)
+4. `http`: Log HTTP requests, info, warnings, and errors
+5. `verbose`: Log verbose messages and all of the above
+6. `debug`: Log debug messages and all of the above
+7. `silly`: Log everything
+
+To set the log level when starting the server, you can use:
+
+```bash
+LOG_LEVEL=debug npm start
+```
+
+This will run the server with debug-level logging, which includes all log messages.
 
 ## Logging
 
@@ -106,6 +126,8 @@ To change the log level:
 ```bash
 LOG_LEVEL=debug npm start
 ```
+
+This will show all logs up to and including debug level. Adjust the `LOG_LEVEL` value as needed for your desired level of logging detail.
 
 ## Examples
 
@@ -173,4 +195,3 @@ fetch('http://localhost:3000/execute', {
 .then(data => console.log(data.stdout))
 .catch(error => console.error('Error:', error));
 ```
-
