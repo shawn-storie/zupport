@@ -52,6 +52,14 @@ const wss = new WebSocket.Server({ server });
 const BASE_PATH = process.env.BASE_PATH || '/zupport';
 const router = express.Router();
 
+// Load OpenAPI spec
+const openApiSpec = YAML.parse(fs.readFileSync('./openapi.yaml', 'utf8'));
+
+// Use router with base path
+app.use(BASE_PATH, express.json());
+app.use(`${BASE_PATH}/api-docs`, swaggerUi.serve, swaggerUi.setup(openApiSpec));
+app.use(BASE_PATH, router);
+
 // Move all routes to router
 router.get('/health', (req, res) => {
   res.json({
@@ -201,14 +209,6 @@ wss.on('connection', (ws, req) => {
     ws.close();
   }
 });
-
-// Use router with base path
-app.use(BASE_PATH, express.json());
-app.use(`${BASE_PATH}/api-docs`, swaggerUi.serve, swaggerUi.setup(openApiSpec));
-app.use(BASE_PATH, router);
-
-// Load OpenAPI spec
-const openApiSpec = YAML.parse(fs.readFileSync('./openapi.yaml', 'utf8'));
 
 // Start the server
 server.listen(PORT, '0.0.0.0', () => {
