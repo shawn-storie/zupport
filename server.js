@@ -4,7 +4,8 @@ const WebSocket = require('ws');
 const winston = require('winston');
 const http = require('http');
 const path = require('path');
-const fs = require('fs').promises;
+const fs = require('fs');
+const fsp = require('fs').promises;
 const checkDiskSpace = require('check-disk-space').default;
 const { exec } = require('child_process');
 const { version } = require('./version');
@@ -91,7 +92,7 @@ wss.on('connection', (ws, req) => {
 // Get list of available log files
 app.get('/logs', async (req, res) => {
   try {
-    const files = await fs.readdir(LOG_DIR);
+    const files = await fsp.readdir(LOG_DIR);
     res.json({ logs: files });
   } catch (error) {
     logger.error('Error reading logs directory:', error);
@@ -102,7 +103,7 @@ app.get('/logs', async (req, res) => {
 // Get list of editable files
 app.get('/editable-files', async (req, res) => {
   try {
-    const files = await fs.readdir(EDITABLE_DIR);
+    const files = await fsp.readdir(EDITABLE_DIR);
     res.json({ files });
   } catch (error) {
     logger.error('Error reading editable directory:', error);
@@ -119,7 +120,7 @@ app.get('/file-content', async (req, res) => {
 
   try {
     const filePath = path.join(EDITABLE_DIR, file);
-    const content = await fs.readFile(filePath, 'utf8');
+    const content = await fsp.readFile(filePath, 'utf8');
     res.json({ content });
   } catch (error) {
     logger.error(`Error reading file ${file}:`, error);
@@ -136,7 +137,7 @@ app.post('/edit-file', async (req, res) => {
 
   try {
     const fullPath = path.join(EDITABLE_DIR, filePath);
-    await fs.writeFile(fullPath, content);
+    await fsp.writeFile(fullPath, content);
     res.json({ message: 'File updated successfully' });
   } catch (error) {
     logger.error(`Error writing to file ${filePath}:`, error);
