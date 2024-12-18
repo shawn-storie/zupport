@@ -5,7 +5,7 @@ const winston = require('winston');
 const http = require('http');
 const path = require('path');
 const fs = require('fs').promises;
-const diskusage = require('disk-usage');
+const checkDiskSpace = require('check-disk-space').default;
 const { exec } = require('child_process');
 const { version } = require('./version');
 
@@ -162,19 +162,22 @@ app.post('/execute', (req, res) => {
 });
 
 // Get server statistics
-app.get('/server-stats', (req, res) => {
+app.get('/server-stats', async (req, res) => {
   try {
-    // Collect server statistics
+    const diskSpace = await checkDiskSpace('/');
     const stats = {
       memory: {
         total: process.memoryUsage().heapTotal,
         used: process.memoryUsage().heapUsed
       },
       uptime: process.uptime(),
-      disk: diskusage.checkSync('/')
+      disk: {
+        total: diskSpace.size,
+        free: diskSpace.free,
+        used: diskSpace.size - diskSpace.free
+      }
     };
 
-    // Return HTML for HTMX requests
     if (req.headers['hx-request']) {
       res.send(`
         <div>
@@ -185,7 +188,6 @@ app.get('/server-stats', (req, res) => {
         </div>
       `);
     } else {
-      // Return JSON for API requests
       res.json(stats);
     }
   } catch (error) {
