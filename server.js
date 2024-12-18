@@ -183,8 +183,10 @@ router.get('/version', async (req, res) => {
 
 // WebSocket handler for real-time log streaming
 wss.on('connection', (ws, req) => {
-  // Extract log file name from query parameters
-  const logFile = new URL(req.url, 'http://localhost').searchParams.get('log');
+  const params = new URL(req.url, 'http://localhost').searchParams;
+  const logFile = params.get('log');
+  const logLevel = params.get('level')?.toUpperCase(); // Get optional level parameter
+
   if (!logFile) {
     ws.close();
     return;
@@ -194,14 +196,18 @@ wss.on('connection', (ws, req) => {
   const tail = require('tail').Tail;
   
   try {
-    // Create tail process to watch log file
     const tailProcess = new tail(logPath);
-    // Send new log lines to connected client
     tailProcess.on('line', (data) => {
-      ws.send(JSON.stringify({ timestamp: new Date(), message: data }));
+      // Only send if no level specified or line contains the specified level
+      if (!logLevel || data.includes(logLevel)) {
+        ws.send(JSON.stringify({ 
+          timestamp: new Date(), 
+          message: data,
+          level: logLevel || 'ALL'
+        }));
+      }
     });
 
-    // Clean up tail process when connection closes
     ws.on('close', () => {
       tailProcess.unwatch();
     });

@@ -113,6 +113,14 @@ paths:
             type: string
           example: catalina.out
           description: Name of the log file to stream
+        - in: query
+          name: level
+          required: false
+          schema:
+            type: string
+            enum: [ERROR, WARN, INFO, DEBUG]
+          example: ERROR
+          description: Optional log level filter
       responses:
         '101':
           description: Switching protocols to WebSocket
