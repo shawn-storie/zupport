@@ -8,11 +8,9 @@ NC='\033[0m' # No Color
 # Base URL
 BASE_URL="http://localhost:3000"
 
-echo "Installing websocat if not present..."
-if ! command -v websocat &> /dev/null; then
-    # For Amazon Linux 2023
-    sudo dnf install -y cargo
-    cargo install websocat
+echo "Installing wscat if not present..."
+if ! command -v wscat &> /dev/null; then
+    sudo npm install -g wscat
 fi
 
 # Function to test an endpoint
@@ -90,7 +88,7 @@ test_post_endpoint "/edit-file" \
 # Test WebSocket log streaming
 echo -e "\nTesting WebSocket log streaming..."
 echo "Connecting to WebSocket for 5 seconds..."
-timeout 5 websocat "ws://localhost:3000/ws?log=combined.log" || echo "WebSocket test completed"
+timeout 5 wscat -c "ws://localhost:3000/ws?log=combined.log" || echo "WebSocket test completed"
 
 # Clean up
 rm -f test.txt

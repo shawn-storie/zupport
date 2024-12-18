@@ -22,21 +22,10 @@ echo "Installing Node.js and npm..."
 sudo dnf install -y nodejs npm
 check_status "Node.js and npm installation"
 
-# Install development tools and cargo
-echo "Installing development tools and cargo..."
-sudo dnf groupinstall -y "Development Tools"
-sudo dnf install -y cargo
-check_status "Development tools installation"
-
-# Install websocat using cargo
-echo "Installing websocat..."
-cargo install websocat
-check_status "Websocat installation"
-
-# Add cargo binaries to PATH
-echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-check_status "PATH configuration"
+# Install wscat globally
+echo "Installing wscat..."
+sudo npm install -g wscat
+check_status "wscat installation"
 
 # Install screen for background processes
 echo "Installing screen..."
