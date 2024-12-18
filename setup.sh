@@ -38,9 +38,19 @@ mkdir -p logs
 chmod 755 logs
 check_status "Logs directory setup"
 
+# Clean any existing node_modules and package-lock.json
+echo "Cleaning existing npm files..."
+rm -rf node_modules package-lock.json
+
 # Install npm dependencies
 echo "Installing npm dependencies..."
 npm install
+if [ $? -ne 0 ]; then
+    echo "First npm install failed, updating package.json and retrying..."
+    # Update package.json to use check-disk-space instead of disk-usage
+    sed -i 's/"disk-usage": "\^1.1.3"/"check-disk-space": "\^3.3.1"/' package.json
+    npm install
+fi
 check_status "npm dependencies installation"
 
 # Generate version file
