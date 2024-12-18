@@ -33,6 +33,8 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
 
 ## Installation
 
+### Local Installation
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/shawn-storie/zupport.git
@@ -57,6 +59,43 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
    ```bash
    npm start
    ```
+
+### AWS Deployment Configuration
+
+#### Application Load Balancer Setup
+
+1. Create a Target Group:
+   - Target type: IP or Instance
+   - Protocol: HTTP
+   - Port: 4111
+   - VPC: Your VPC
+   - Health check settings:
+     - Protocol: HTTP
+     - Path: `/health`
+     - Port: 4111
+     - Success codes: 200
+     - Timeout: 5 seconds
+     - Interval: 30 seconds
+     - Healthy threshold: 2
+     - Unhealthy threshold: 2
+
+2. Add ALB Rule:
+   - Configure two conditions:
+     1. Path Pattern: `/zupport/*`
+     2. Host Header: `<your-host>.zpaper.com` (e.g., `dv186.zpaper.com`)
+   - Action: Forward to target group `<your-host>-zupport-tg` (e.g., `dv186-zupport-tg`)
+
+Example:
+```
+IF:
+  Path Pattern is /zupport/*
+  AND
+  Host Header is dv186.zpaper.com
+THEN:
+  Forward to target group dv186-zupport-tg
+```
+
+Note: Replace `dv186` and domain with your specific host configuration.
 
 ## Usage
 
