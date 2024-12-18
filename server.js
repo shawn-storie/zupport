@@ -1,3 +1,4 @@
+// Import required dependencies
 const express = require('express');
 const WebSocket = require('ws');
 const winston = require('winston');
@@ -8,14 +9,15 @@ const diskusage = require('disk-usage');
 const { exec } = require('child_process');
 const { version } = require('./version');
 
-// Environment variables with defaults
+// Environment variables configuration with default values
 const PORT = process.env.PORT || 3000;
 const LOG_DIR = process.env.ZUPPORT_LOG_DIR || path.join(__dirname, 'logs');
 const EDITABLE_DIR = process.env.ZUPPORT_EDITABLE_DIR || process.cwd();
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+// Enable console logging in non-production environments by default
 const CONSOLE_LOGGING = process.env.CONSOLE_LOGGING === 'true' || process.env.NODE_ENV !== 'production';
 
-// Configure Winston logger
+// Configure Winston logger with file transports
 const logger = winston.createLogger({
   level: LOG_LEVEL,
   format: winston.format.combine(
@@ -23,25 +25,32 @@ const logger = winston.createLogger({
     winston.format.json()
   ),
   transports: [
+    // Separate transport for error logs
     new winston.transports.File({ filename: path.join(LOG_DIR, 'error.log'), level: 'error' }),
+    // Combined logs for all levels
     new winston.transports.File({ filename: path.join(LOG_DIR, 'combined.log') })
   ]
 });
 
+// Add console transport if enabled
 if (CONSOLE_LOGGING) {
   logger.add(new winston.transports.Console({
     format: winston.format.simple()
   }));
 }
 
+// Initialize Express app and create HTTP server
 const app = express();
 const server = http.createServer(app);
+// Initialize WebSocket server
 const wss = new WebSocket.Server({ server });
 
+// Parse JSON bodies in requests
 app.use(express.json());
 
-// WebSocket connection handling
+// WebSocket handler for real-time log streaming
 wss.on('connection', (ws, req) => {
+  // Extract log file name from query parameters
   const logFile = new URL(req.url, 'http://localhost').searchParams.get('log');
   if (!logFile) {
     ws.close();
@@ -52,11 +61,14 @@ wss.on('connection', (ws, req) => {
   const tail = require('tail').Tail;
   
   try {
+    // Create tail process to watch log file
     const tailProcess = new tail(logPath);
+    // Send new log lines to connected client
     tailProcess.on('line', (data) => {
       ws.send(JSON.stringify({ timestamp: new Date(), message: data }));
     });
 
+    // Clean up tail process when connection closes
     ws.on('close', () => {
       tailProcess.unwatch();
     });
@@ -67,6 +79,8 @@ wss.on('connection', (ws, req) => {
 });
 
 // API Routes
+
+// Get list of available log files
 app.get('/logs', async (req, res) => {
   try {
     const files = await fs.readdir(LOG_DIR);
@@ -77,6 +91,7 @@ app.get('/logs', async (req, res) => {
   }
 });
 
+// Get list of editable files
 app.get('/editable-files', async (req, res) => {
   try {
     const files = await fs.readdir(EDITABLE_DIR);
@@ -87,6 +102,7 @@ app.get('/editable-files', async (req, res) => {
   }
 });
 
+// Get contents of a specific file
 app.get('/file-content', async (req, res) => {
   const { file } = req.query;
   if (!file) {
@@ -103,6 +119,7 @@ app.get('/file-content', async (req, res) => {
   }
 });
 
+// Update file contents
 app.post('/edit-file', async (req, res) => {
   const { filePath, content } = req.body;
   if (!filePath || content === undefined) {
@@ -119,6 +136,7 @@ app.post('/edit-file', async (req, res) => {
   }
 });
 
+// Get server health status
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -127,6 +145,7 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Execute shell command
 app.post('/execute', (req, res) => {
   const { command } = req.body;
   if (!command) {
@@ -142,8 +161,10 @@ app.post('/execute', (req, res) => {
   });
 });
 
+// Get server statistics
 app.get('/server-stats', (req, res) => {
   try {
+    // Collect server statistics
     const stats = {
       memory: {
         total: process.memoryUsage().heapTotal,
@@ -153,6 +174,7 @@ app.get('/server-stats', (req, res) => {
       disk: diskusage.checkSync('/')
     };
 
+    // Return HTML for HTMX requests
     if (req.headers['hx-request']) {
       res.send(`
         <div>
@@ -163,6 +185,7 @@ app.get('/server-stats', (req, res) => {
         </div>
       `);
     } else {
+      // Return JSON for API requests
       res.json(stats);
     }
   } catch (error) {
@@ -171,15 +194,18 @@ app.get('/server-stats', (req, res) => {
   }
 });
 
+// Get API version
 app.get('/version', (req, res) => {
+  // Return HTML for HTMX requests
   if (req.headers['hx-request']) {
     res.send(`<div>API Version: ${version}</div>`);
   } else {
+    // Return JSON for API requests
     res.json({ version });
   }
 });
 
-// Start server
+// Start the server
 server.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
 }); 
