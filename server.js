@@ -8,6 +8,8 @@ const fs = require('fs').promises;
 const checkDiskSpace = require('check-disk-space').default;
 const { exec } = require('child_process');
 const { version } = require('./version');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yaml');
 
 // Environment variables configuration with default values
 const PORT = process.env.PORT || 3000;
@@ -47,6 +49,12 @@ const wss = new WebSocket.Server({ server });
 
 // Parse JSON bodies in requests
 app.use(express.json());
+
+// Load OpenAPI spec
+const openApiSpec = YAML.parse(fs.readFileSync('./openapi.yaml', 'utf8'));
+
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 // WebSocket handler for real-time log streaming
 wss.on('connection', (ws, req) => {

@@ -1,0 +1,99 @@
+openapi: 3.0.0
+info:
+  title: Zupport API
+  version: 1.0.0
+  description: API for log streaming, file editing, server health monitoring, and command execution
+
+paths:
+  /health:
+    get:
+      summary: Get server health status
+      responses:
+        '200':
+          description: Server health information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  uptime:
+                    type: number
+                  timestamp:
+                    type: string
+
+  /version:
+    get:
+      summary: Get API version
+      responses:
+        '200':
+          description: API version information
+
+  /logs:
+    get:
+      summary: Get list of available log files
+      responses:
+        '200':
+          description: List of log files
+
+  /editable-files:
+    get:
+      summary: Get list of editable files
+      responses:
+        '200':
+          description: List of editable files
+
+  /file-content:
+    get:
+      summary: Get file content
+      parameters:
+        - in: query
+          name: file
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File content
+
+  /edit-file:
+    post:
+      summary: Edit file content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filePath:
+                  type: string
+                content:
+                  type: string
+      responses:
+        '200':
+          description: File updated successfully
+
+  /execute:
+    post:
+      summary: Execute command
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+      responses:
+        '200':
+          description: Command execution result
+
+  /server-stats:
+    get:
+      summary: Get server statistics
+      responses:
+        '200':
+          description: Server statistics 
