@@ -4,6 +4,10 @@ info:
   version: 1.0.0
   description: API for log streaming, file editing, server health monitoring, and command execution
 
+servers:
+  - url: /zupport
+    description: Base path for all endpoints
+
 paths:
   /health:
     get:
@@ -97,3 +101,18 @@ paths:
       responses:
         '200':
           description: Server statistics 
+
+  /ws:
+    get:
+      summary: WebSocket endpoint for log streaming
+      parameters:
+        - in: query
+          name: log
+          required: true
+          schema:
+            type: string
+          example: catalina.out
+          description: Name of the log file to stream
+      responses:
+        '101':
+          description: Switching protocols to WebSocket

@@ -1,0 +1,15 @@
+# Environment variables
+.env
+
+# Logs
+logs
+*.log
+
+# Dependencies
+node_modules/
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# npm package lock
+package-lock.json 

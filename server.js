@@ -1,4 +1,5 @@
 // Import required dependencies
+require('dotenv').config();
 const express = require('express');
 const WebSocket = require('ws');
 const winston = require('winston');

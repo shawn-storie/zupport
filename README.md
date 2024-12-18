@@ -46,7 +46,16 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
    npm install
    ```
 
-3. Set up environment variables (optional):
+3. Configure environment:
+   ```bash
+   # Copy example environment file
+   cp .env.example .env
+   
+   # Edit .env with your settings
+   nano .env
+   ```
+
+4. Environment variables can also be set directly:
    ```bash
    export ZUPPORT_LOG_DIR=/path/to/logs
    export ZUPPORT_EDITABLE_DIR=/path/to/editable/files
