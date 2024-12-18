@@ -12,7 +12,7 @@ const swaggerUi = require('swagger-ui-express');
 const YAML = require('yaml');
 
 // Environment variables configuration with default values
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4111;
 const LOG_DIR = process.env.ZUPPORT_LOG_DIR || path.join(__dirname, 'logs');
 const EDITABLE_DIR = process.env.ZUPPORT_EDITABLE_DIR || process.cwd();
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';

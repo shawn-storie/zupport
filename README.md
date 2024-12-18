@@ -48,7 +48,7 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
    ```bash
    export ZUPPORT_LOG_DIR=/path/to/logs
    export ZUPPORT_EDITABLE_DIR=/path/to/editable/files
-   export PORT=3000
+   export PORT=4111
    export LOG_LEVEL=info
    export CONSOLE_LOGGING=true
    ```
@@ -60,7 +60,10 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
 
 ## Usage
 
-After starting the server, you can access the web interface at `http://localhost:3000` (or the port you specified).
+After starting the server, you can access:
+- Web interface: `http://localhost:4111`
+- API Documentation: `http://localhost:4111/api-docs`
+- Health Check: `http://localhost:4111/health`
 
 For programmatic access, you can use the API endpoints directly. Refer to the [API Endpoints](#api-endpoints) section for details.
 
@@ -96,7 +99,7 @@ The web interface provides easy access to all features:
 
 The following environment variables can be used to configure the server:
 
-- `PORT`: The port number for the server (default: 3000)
+- `PORT`: The port number for the server (default: 4111)
 - `ZUPPORT_LOG_DIR`: Directory containing log files (default: `<project_root>/logs`)
 - `ZUPPORT_EDITABLE_DIR`: Directory containing editable files (default: current working directory)
 - `LOG_LEVEL`: Logging level (default: 'info')
@@ -184,7 +187,7 @@ When adding new features or modifying existing ones, make sure to update or add 
 ### Fetching Log Files
 
 ```javascript
-fetch('http://localhost:3000/logs')
+fetch('http://localhost:4111/logs')
   .then(response => response.json())
   .then(data => console.log(data.logs))
   .catch(error => console.error('Error:', error));
@@ -193,7 +196,7 @@ fetch('http://localhost:3000/logs')
 ### Streaming Logs via WebSocket
 
 ```javascript
-const ws = new WebSocket('ws://localhost:3000/ws?log=application.log');
+const ws = new WebSocket('ws://localhost:4111/ws?log=application.log');
 
 ws.onmessage = function(event) {
   const logEntry = JSON.parse(event.data);
@@ -204,7 +207,7 @@ ws.onmessage = function(event) {
 ### Editing a File
 
 ```javascript
-fetch('http://localhost:3000/edit-file', {
+fetch('http://localhost:4111/edit-file', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -222,7 +225,7 @@ fetch('http://localhost:3000/edit-file', {
 ### Fetching Server Stats
 
 ```javascript
-fetch('http://localhost:3000/server-stats')
+fetch('http://localhost:4111/server-stats')
   .then(response => response.json())
   .then(data => console.log(data))
   .catch(error => console.error('Error:', error));
@@ -231,7 +234,7 @@ fetch('http://localhost:3000/server-stats')
 ### Fetching API Version
 
 ```javascript
-fetch('http://localhost:3000/version')
+fetch('http://localhost:4111/version')
   .then(response => response.json())
   .then(data => console.log(data.version))
   .catch(error => console.error('Error:', error));
