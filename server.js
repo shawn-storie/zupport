@@ -217,6 +217,6 @@ app.get('/version', (req, res) => {
 });
 
 // Start the server
-server.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  logger.info(`Server running on 0.0.0.0:${PORT}`);
 }); 
