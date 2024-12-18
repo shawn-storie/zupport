@@ -48,49 +48,20 @@ const server = http.createServer(app);
 // Initialize WebSocket server
 const wss = new WebSocket.Server({ server });
 
-// Parse JSON bodies in requests
-app.use(express.json());
+// Add after app initialization
+const BASE_PATH = process.env.BASE_PATH || '/zupport';
+const router = express.Router();
 
-// Load OpenAPI spec
-const openApiSpec = YAML.parse(fs.readFileSync('./openapi.yaml', 'utf8'));
-
-// Serve Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
-
-// WebSocket handler for real-time log streaming
-wss.on('connection', (ws, req) => {
-  // Extract log file name from query parameters
-  const logFile = new URL(req.url, 'http://localhost').searchParams.get('log');
-  if (!logFile) {
-    ws.close();
-    return;
-  }
-
-  const logPath = path.join(LOG_DIR, logFile);
-  const tail = require('tail').Tail;
-  
-  try {
-    // Create tail process to watch log file
-    const tailProcess = new tail(logPath);
-    // Send new log lines to connected client
-    tailProcess.on('line', (data) => {
-      ws.send(JSON.stringify({ timestamp: new Date(), message: data }));
-    });
-
-    // Clean up tail process when connection closes
-    ws.on('close', () => {
-      tailProcess.unwatch();
-    });
-  } catch (error) {
-    logger.error(`Error setting up log streaming for ${logFile}:`, error);
-    ws.close();
-  }
+// Move all routes to router
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
 });
 
-// API Routes
-
-// Get list of available log files
-app.get('/logs', async (req, res) => {
+router.get('/logs', async (req, res) => {
   try {
     const files = await fsp.readdir(LOG_DIR);
     res.json({ logs: files });
@@ -100,8 +71,7 @@ app.get('/logs', async (req, res) => {
   }
 });
 
-// Get list of editable files
-app.get('/editable-files', async (req, res) => {
+router.get('/editable-files', async (req, res) => {
   try {
     const files = await fsp.readdir(EDITABLE_DIR);
     res.json({ files });
@@ -111,8 +81,7 @@ app.get('/editable-files', async (req, res) => {
   }
 });
 
-// Get contents of a specific file
-app.get('/file-content', async (req, res) => {
+router.get('/file-content', async (req, res) => {
   const { file } = req.query;
   if (!file) {
     return res.status(400).json({ error: 'File parameter is required' });
@@ -128,8 +97,7 @@ app.get('/file-content', async (req, res) => {
   }
 });
 
-// Update file contents
-app.post('/edit-file', async (req, res) => {
+router.post('/edit-file', async (req, res) => {
   const { filePath, content } = req.body;
   if (!filePath || content === undefined) {
     return res.status(400).json({ error: 'File path and content are required' });
@@ -145,17 +113,7 @@ app.post('/edit-file', async (req, res) => {
   }
 });
 
-// Get server health status
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Execute shell command
-app.post('/execute', (req, res) => {
+router.post('/execute', async (req, res) => {
   const { command } = req.body;
   if (!command) {
     return res.status(400).json({ error: 'Command is required' });
@@ -170,8 +128,7 @@ app.post('/execute', (req, res) => {
   });
 });
 
-// Get server statistics
-app.get('/server-stats', async (req, res) => {
+router.get('/server-stats', async (req, res) => {
   try {
     const diskSpace = await checkDiskSpace('/');
     const stats = {
@@ -205,8 +162,7 @@ app.get('/server-stats', async (req, res) => {
   }
 });
 
-// Get API version
-app.get('/version', (req, res) => {
+router.get('/version', async (req, res) => {
   // Return HTML for HTMX requests
   if (req.headers['hx-request']) {
     res.send(`<div>API Version: ${version}</div>`);
@@ -215,6 +171,44 @@ app.get('/version', (req, res) => {
     res.json({ version });
   }
 });
+
+// WebSocket handler for real-time log streaming
+wss.on('connection', (ws, req) => {
+  // Extract log file name from query parameters
+  const logFile = new URL(req.url, 'http://localhost').searchParams.get('log');
+  if (!logFile) {
+    ws.close();
+    return;
+  }
+
+  const logPath = path.join(LOG_DIR, logFile);
+  const tail = require('tail').Tail;
+  
+  try {
+    // Create tail process to watch log file
+    const tailProcess = new tail(logPath);
+    // Send new log lines to connected client
+    tailProcess.on('line', (data) => {
+      ws.send(JSON.stringify({ timestamp: new Date(), message: data }));
+    });
+
+    // Clean up tail process when connection closes
+    ws.on('close', () => {
+      tailProcess.unwatch();
+    });
+  } catch (error) {
+    logger.error(`Error setting up log streaming for ${logFile}:`, error);
+    ws.close();
+  }
+});
+
+// Use router with base path
+app.use(BASE_PATH, express.json());
+app.use(`${BASE_PATH}/api-docs`, swaggerUi.serve, swaggerUi.setup(openApiSpec));
+app.use(BASE_PATH, router);
+
+// Load OpenAPI spec
+const openApiSpec = YAML.parse(fs.readFileSync('./openapi.yaml', 'utf8'));
 
 // Start the server
 server.listen(PORT, '0.0.0.0', () => {
