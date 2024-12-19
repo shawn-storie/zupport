@@ -398,13 +398,21 @@ function getServiceStatus() {
     });
 
     // Get top processes by CPU and memory
-    const topProcesses = execSync(`ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%cpu | head -n 6`).toString()
+    const topProcesses = execSync(`ps -eo pid,ppid,%cpu,%mem,comm --sort=-%cpu | head -n 6`).toString()
       .split('\n')
       .slice(1) // Remove header
       .filter(line => line.trim())
       .map(line => {
-        const [pid, ppid, cmd, mem, cpu] = line.trim().split(/\s+/);
-        return { pid, ppid, cmd, mem: parseFloat(mem), cpu: parseFloat(cpu) };
+        const parts = line.trim().split(/\s+/);
+        const [pid, ppid, cpu, mem, ...cmdParts] = parts;
+        const cmd = cmdParts.join(' ');
+        return { 
+          pid, 
+          ppid, 
+          cmd,
+          cpu: parseFloat(cpu) || 0,
+          mem: parseFloat(mem) || 0
+        };
       });
 
     return { services: serviceStatus, topProcesses };
@@ -576,10 +584,10 @@ router.get('/status', async (req, res) => {
             <h4 class="subsection">Top Processes</h4>
             ${status.topProcesses.map(proc => `
               <div class="metric-row">
-                <span class="metric-label" title="${proc.cmd}">${proc.cmd.split('/').pop()}</span>
+                <span class="metric-label" title="${proc.cmd}">${proc.cmd}</span>
                 <span class="metric-value">
                   <span class="resource-usage">
-                    CPU: ${proc.cpu.toFixed(1)}% | MEM: ${proc.mem.toFixed(1)}%
+                    CPU: ${proc.cpu.toFixed(1)}% | MEM: ${proc.mem > 0 ? proc.mem.toFixed(1) : '0.0'}%
                   </span>
                 </span>
               </div>
