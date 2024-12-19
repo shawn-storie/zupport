@@ -189,7 +189,7 @@
         const MAX_LINES = 1000;
         let generating = false;
 
-        const logPattern = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(\w+)\s+([^\s-]+)\s*-\s*(.+)$/;
+        const logPattern = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(\w+)\s+([^-]+?)\s*-\s*(.+)$/;
 
         function connect() {
             const logFile = document.getElementById('logFile').value;
@@ -216,13 +216,16 @@
         }
 
         function parseLine(line) {
+            console.log('Parsing line:', line);
             const match = line.match(logPattern);
             if (!match) {
+                console.log('No match found');
                 appendRawLine(line);
                 return;
             }
 
             const [, timestamp, fishtag, thread, level, component, message] = match;
+            console.log('Parsed:', { timestamp, fishtag, thread, level, component, message });
             appendParsedLine({ timestamp, fishtag, thread, level, component, message });
         }
 
@@ -236,34 +239,37 @@
             
             const fishtag = document.createElement('span');
             fishtag.className = 'fishtag';
-            fishtag.textContent = parts.fishtag;
+            fishtag.textContent = parts.fishtag.trim();
             fishtag.setAttribute('data-tag', parts.fishtag);
             fishtag.onclick = () => highlightFishtag(parts.fishtag);
             
             const thread = document.createElement('span');
             thread.className = 'thread';
-            thread.textContent = `[${parts.thread}]`;
+            thread.textContent = `[${parts.thread.trim()}]`;
             
             const level = document.createElement('span');
             level.className = `level ${parts.level.toUpperCase()}`;
-            level.textContent = parts.level;
+            level.textContent = parts.level.trim();
             
             const component = document.createElement('span');
             component.className = 'component';
-            component.textContent = `${parts.component} -`;
+            component.textContent = `${parts.component.trim()} -`;
             
             const message = document.createElement('span');
             message.className = 'message';
-            message.textContent = parts.message;
+            message.textContent = parts.message.trim();
             
-            line.append(timestamp, '[', fishtag, ']', thread, level, component, message);
+            const wrapper = document.createElement('span');
+            wrapper.append(timestamp, ' [', fishtag, '] ', thread, ' ', level, ' ', component, ' ', message);
+            line.appendChild(wrapper);
             appendLine(line);
         }
 
         function appendRawLine(text) {
             const line = document.createElement('div');
             line.className = 'terminal-line';
-            line.textContent = text;
+            console.log('Raw line:', text);
+            line.textContent = text.trim();
             appendLine(line);
         }
 
