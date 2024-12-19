@@ -176,8 +176,10 @@
             <button onclick="clearLogs()">Clear</button>
             <button onclick="toggleScroll()">Toggle Auto-scroll</button>
             <button onclick="toggleLogGeneration()" id="genButton">Start Generator</button>
+            <button onclick="toggleDebug()" id="debugButton">Show Debug</button>
         </div>
     </div>
+    <div id="debug" style="display: none; background: #333; color: #fff; padding: 10px; margin: 10px 0; border-radius: 8px; font-family: monospace;"></div>
     <div id="terminal"></div>
     <div id="status" class="disconnected">Disconnected</div>
 
@@ -188,6 +190,7 @@
         let lineBuffer = [];
         const MAX_LINES = 1000;
         let generating = false;
+        let debugging = false;
 
         const logPattern = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(\w+)\s+([^-]+?)\s*-\s*(.+)$/;
 
@@ -211,21 +214,41 @@
             
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
+                console.log('WebSocket received:', data);
                 parseLine(data.message);
             };
         }
 
+        function debug(message, data) {
+            console.log(message, data);
+            if (debugging) {
+                const debugDiv = document.getElementById('debug');
+                const entry = document.createElement('div');
+                entry.textContent = `${new Date().toISOString()} ${message}: ${JSON.stringify(data)}`;
+                debugDiv.insertBefore(entry, debugDiv.firstChild);
+                if (debugDiv.children.length > 50) {
+                    debugDiv.removeChild(debugDiv.lastChild);
+                }
+            }
+        }
+
+        function toggleDebug() {
+            debugging = !debugging;
+            document.getElementById('debug').style.display = debugging ? 'block' : 'none';
+            document.getElementById('debugButton').textContent = debugging ? 'Hide Debug' : 'Show Debug';
+        }
+
         function parseLine(line) {
-            console.log('Parsing line:', line);
+            debug('Parsing line', line);
             const match = line.match(logPattern);
             if (!match) {
-                console.log('No match found');
+                debug('No match found', { line });
                 appendRawLine(line);
                 return;
             }
 
             const [, timestamp, fishtag, thread, level, component, message] = match;
-            console.log('Parsed:', { timestamp, fishtag, thread, level, component, message });
+            debug('Parsed', { timestamp, fishtag, thread, level, component, message });
             appendParsedLine({ timestamp, fishtag, thread, level, component, message });
         }
 
