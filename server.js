@@ -221,34 +221,39 @@ router.get('/status', async (req, res) => {
         <div class="status-container">
           <h3>System Status</h3>
           <div class="status-section">
-            <h4>System</h4>
-            <p>Hostname: ${status.system.hostname}</p>
-            <p>Platform: ${status.system.platform} (${status.system.arch})</p>
-            <p>CPUs: ${status.system.cpus}</p>
-            <p>Load Average: ${status.system.loadavg.map(load => load.toFixed(2)).join(', ')}</p>
-            <p>Uptime: ${Math.floor(status.system.uptime / 3600)} hours</p>
+            <h4>System Information</h4>
+            <p>Hostname: <span class="metric-value">${status.system.hostname}</span></p>
+            <p>Platform: <span class="metric-value">${status.system.platform} (${status.system.arch})</span></p>
+            <p>CPUs: <span class="metric-value">${status.system.cpus}</span></p>
+            <p>Load Average: <span class="metric-value">${status.system.loadavg.map(load => load.toFixed(2)).join(', ')}</span></p>
+            <p>Uptime: <span class="metric-value">${Math.floor(status.system.uptime / 3600)} hours</span></p>
           </div>
           
           <div class="status-section">
-            <h4>Memory</h4>
-            <p>Total: ${Math.round(status.memory.total / 1024 / 1024)} MB</p>
-            <p>Free: ${Math.round(status.memory.free / 1024 / 1024)} MB</p>
-            <p>Used: ${Math.round(status.memory.used / 1024 / 1024)} MB</p>
-            <p>Process Heap: ${Math.round(status.memory.process.heapUsed / 1024 / 1024)} MB</p>
+            <h4>Memory Usage</h4>
+            <p>Memory Usage
+              <span class="progress-text">${Math.round((status.memory.used / status.memory.total) * 100)}%</span>
+              <span data-progress="${(status.memory.used / status.memory.total) * 100}"></span>
+            </p>
+            <p>Heap Usage
+              <span class="progress-text">${Math.round((status.memory.process.heapUsed / status.memory.process.heapTotal) * 100)}%</span>
+              <span data-progress="${(status.memory.process.heapUsed / status.memory.process.heapTotal) * 100}"></span>
+            </p>
           </div>
           
           <div class="status-section">
-            <h4>Disk</h4>
-            <p>Total: ${Math.round(status.disk.total / 1024 / 1024 / 1024)} GB</p>
-            <p>Free: ${Math.round(status.disk.free / 1024 / 1024 / 1024)} GB</p>
-            <p>Used: ${Math.round(status.disk.used / 1024 / 1024 / 1024)} GB</p>
+            <h4>Disk Usage</h4>
+            <p>Disk Usage
+              <span class="progress-text">${Math.round((status.disk.used / status.disk.total) * 100)}%</span>
+              <span data-progress="${(status.disk.used / status.disk.total) * 100}"></span>
+            </p>
           </div>
           
           <div class="status-section">
-            <h4>Process</h4>
-            <p>PID: ${status.process.pid}</p>
-            <p>Node Version: ${status.process.version}</p>
-            <p>Uptime: ${Math.floor(status.process.uptime / 60)} minutes</p>
+            <h4>Process Information</h4>
+            <p>PID: <span class="metric-value">${status.process.pid}</span></p>
+            <p>Node Version: <span class="metric-value">${status.process.version}</span></p>
+            <p>Uptime: <span class="metric-value">${Math.floor(status.process.uptime / 60)} minutes</span></p>
           </div>
         </div>
       `);

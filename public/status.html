@@ -6,7 +6,7 @@
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
             background: #f5f5f5;
@@ -22,30 +22,92 @@
             padding: 15px;
             border: 1px solid #eee;
             border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .status-section:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         h3 {
             color: #2c3e50;
             margin-top: 0;
+            font-size: 24px;
         }
         h4 {
             color: #34495e;
-            margin: 0 0 10px 0;
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h4::before {
+            content: '';
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2ecc71;
         }
         p {
-            margin: 5px 0;
+            margin: 10px 0;
             color: #555;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .progress-container {
+            flex-grow: 1;
+            margin-left: 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 20px;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            min-width: 100px;
+            text-align: right;
+        }
+        .metric-value {
+            font-weight: bold;
+            color: #2c3e50;
         }
         .refresh-button {
             background: #3498db;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+            padding: 12px 24px;
+            border-radius: 6px;
             cursor: pointer;
             margin-bottom: 20px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .refresh-button:hover {
             background: #2980b9;
+            transform: translateY(-1px);
+        }
+        .refresh-button::before {
+            content: '🔄';
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .loading {
+            animation: pulse 1s infinite;
         }
     </style>
 </head>
@@ -53,14 +115,36 @@
     <button class="refresh-button"
             hx-get="/zupport/status"
             hx-target="#status-content"
-            hx-trigger="click, every 30s">
-        Refresh Status
+            hx-trigger="click, every 5s">
+        System Status
     </button>
     
     <div id="status-content"
          hx-get="/zupport/status"
-         hx-trigger="load">
+         hx-trigger="load"
+         class="status-grid">
         Loading...
     </div>
+
+    <template id="progress-bar">
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+    </template>
+
+    <script>
+        // Add progress bars and animations to the status updates
+        document.body.addEventListener('htmx:afterSwap', function() {
+            // Add progress bars to memory usage
+            const memoryBars = document.querySelectorAll('[data-progress]');
+            memoryBars.forEach(el => {
+                const progress = parseFloat(el.getAttribute('data-progress'));
+                const bar = document.querySelector('#progress-bar').content.cloneNode(true);
+                const progressBar = bar.querySelector('.progress-bar');
+                progressBar.style.width = `${progress}%`;
+                el.appendChild(bar);
+            });
+        });
+    </script>
 </body>
 </html> 
