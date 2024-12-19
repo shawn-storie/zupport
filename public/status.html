@@ -22,20 +22,20 @@
         }
 
         [data-theme="dark"] {
-            --bg-color: #1a1a1a;
-            --text-color: #ecf0f1;
-            --card-bg: #2c3e50;
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
             --card-shadow: rgba(0,0,0,0.3);
-            --border-color: #34495e;
-            --progress-bg: #34495e;
+            --border-color: #404040;
+            --progress-bg: #2d2d2d;
             --queue-healthy: #1b5e20;
             --queue-tired: #f57f17;
             --queue-sick: #e65100;
             --queue-dead: #b71c1c;
-            --xml-badge-bg: #0d47a1;
-            --xml-badge-color: #bbdefb;
-            --pdf-badge-bg: #bf360c;
-            --pdf-badge-color: #ffccbc;
+            --xml-badge-bg: #1565c0;
+            --xml-badge-color: #ffffff;
+            --pdf-badge-bg: #d84315;
+            --pdf-badge-color: #ffffff;
         }
 
         body {
@@ -45,7 +45,7 @@
             padding: 20px;
             background: var(--bg-color);
             color: var(--text-color);
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: all 0.3s ease;
         }
         .page-header {
             text-align: center;
@@ -111,12 +111,13 @@
             padding: 5px 0;
         }
         .metric-label {
-            color: #666;
+            color: var(--text-color);
             font-weight: 500;
+            opacity: 0.8;
         }
         .metric-value {
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--text-color);
             text-align: right;
             white-space: nowrap;
         }
@@ -288,6 +289,31 @@
             background: var(--card-shadow);
             transform: scale(1.1);
         }
+
+        [data-theme="dark"] .status-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .queues .metric-row.tired {
+            background: rgba(245, 127, 23, 0.2);
+        }
+
+        [data-theme="dark"] .queues .metric-row.sick {
+            background: rgba(230, 81, 0, 0.2);
+        }
+
+        [data-theme="dark"] .queues .metric-row.dead {
+            background: rgba(183, 28, 28, 0.2);
+        }
+
+        [data-theme="dark"] .queue-summary {
+            background: rgba(27, 94, 32, 0.2);
+        }
+
+        [data-theme="dark"] .disk-summary {
+            background: rgba(21, 101, 192, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -307,6 +333,22 @@
         Loading...
     </div>
     <script>
+        // Check if user prefers dark mode
+        function prefersDarkMode() {
+            return window.matchMedia && 
+                   window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        // Watch for system theme changes
+        function watchSystemTheme() {
+            window.matchMedia('(prefers-color-scheme: dark)')
+                .addEventListener('change', event => {
+                    if (!localStorage.getItem('theme')) {  // Only auto-switch if user hasn't manually set theme
+                        document.body.setAttribute('data-theme', event.matches ? 'dark' : 'light');
+                    }
+                });
+        }
+
         function toggleTheme() {
             const body = document.body;
             const currentTheme = body.getAttribute('data-theme');
@@ -315,10 +357,11 @@
             localStorage.setItem('theme', newTheme);
         }
 
-        // Set initial theme from localStorage
+        // Set initial theme from localStorage or system preference
         document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            const savedTheme = localStorage.getItem('theme') || (prefersDarkMode() ? 'dark' : 'light');
             document.body.setAttribute('data-theme', savedTheme);
+            watchSystemTheme();
         });
     </script>
 </body>
