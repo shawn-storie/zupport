@@ -279,49 +279,71 @@ router.get('/status', async (req, res) => {
     };
 
     if (req.headers['hx-request']) {
-      // Update the HTMX response to include new sections
       res.send(`
         <div class="status-container">
           <h3>System Status for ${status.system.hostname}</h3>
           
           <div class="status-section">
             <h4>System Information</h4>
-            <p>Hostname: <span class="metric-value">${status.system.hostname}</span></p>
-            <p>Platform: <span class="metric-value">${status.system.platform} (${status.system.arch})</span></p>
-            <p>CPUs: <span class="metric-value">${status.system.cpus}</span></p>
-            <p>Load Average: <span class="metric-value">${status.system.loadavg.map(load => load.toFixed(2)).join(', ')}</span></p>
-            <p>Load Thresholds: <span class="metric-value">${status.system.thresholds.load.join(', ')}</span></p>
+            <div class="metric-row">
+              <span class="metric-label">Hostname</span>
+              <span class="metric-value">${status.system.hostname}</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Platform</span>
+              <span class="metric-value">${status.system.platform} (${status.system.arch})</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">CPUs</span>
+              <span class="metric-value">${status.system.cpus}</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Load Average</span>
+              <span class="metric-value">${status.system.loadavg.map(load => load.toFixed(2)).join(', ')}</span>
+              <div class="progress-wrapper">
+                <div class="progress-bar" style="width: ${(status.system.loadavg[0] / status.system.thresholds.load[2]) * 100}%"></div>
+              </div>
+            </div>
           </div>
           
           <div class="status-section">
             <h4>Memory Usage</h4>
-            <p>System Memory
-              <span class="progress-text">${Math.round((status.memory.used / status.memory.total) * 100)}%</span>
-              <span data-progress="${(status.memory.used / status.memory.total) * 100}"></span>
-            </p>
-            <p>MemFree: <span class="metric-value">${status.memory.details.memFree}</span></p>
-            <p>SwapFree: <span class="metric-value">${status.memory.details.swapFree}</span></p>
+            <div class="metric-row">
+              <span class="metric-label">System Memory</span>
+              <span class="metric-value">${Math.round((status.memory.used / status.memory.total) * 100)}%</span>
+              <div class="progress-wrapper">
+                <div class="progress-bar" style="width: ${(status.memory.used / status.memory.total) * 100}%"></div>
+              </div>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Memory Free</span>
+              <span class="metric-value">${status.memory.details.memFree}</span>
+            </div>
           </div>
           
           <div class="status-section">
             <h4>Disk Usage</h4>
             ${status.disk.filesystems.map(fs => `
-              <p>${fs.filesystem} (${fs.mountpoint})
-                <span class="progress-text">${fs.capacity}</span>
-                <span data-progress="${parseInt(fs.capacity)}"></span>
-              </p>
+              <div class="metric-row">
+                <span class="metric-label">${fs.filesystem}</span>
+                <span class="metric-value">${fs.capacity}</span>
+                <div class="progress-wrapper ${parseInt(fs.capacity) > 90 ? 'critical' : parseInt(fs.capacity) > 70 ? 'warning' : ''}">
+                  <div class="progress-bar" style="width: ${fs.capacity}"></div>
+                </div>
+              </div>
             `).join('')}
           </div>
           
           ${status.tomcat ? `
           <div class="status-section">
             <h4>Tomcat Status</h4>
-            <p>JVM Memory
-              <span class="progress-text">${Math.round(((status.tomcat.jvm.total - status.tomcat.jvm.free) / status.tomcat.jvm.total) * 100)}%</span>
-              <span data-progress="${((status.tomcat.jvm.total - status.tomcat.jvm.free) / status.tomcat.jvm.total) * 100}"></span>
-            </p>
-            <p>Current Threads: <span class="metric-value">${status.tomcat.connector.currentThreads}</span></p>
-            <p>Max Response Time: <span class="metric-value">${status.tomcat.connector.maxTime}ms</span></p>
+            <div class="metric-row">
+              <span class="metric-label">JVM Memory</span>
+              <span class="metric-value">${Math.round(((status.tomcat.jvm.total - status.tomcat.jvm.free) / status.tomcat.jvm.total) * 100)}%</span>
+              <div class="progress-wrapper">
+                <div class="progress-bar" style="width: ${((status.tomcat.jvm.total - status.tomcat.jvm.free) / status.tomcat.jvm.total) * 100}%"></div>
+              </div>
+            </div>
           </div>
           ` : ''}
         </div>
