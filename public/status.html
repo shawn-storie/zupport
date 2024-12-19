@@ -403,9 +403,43 @@
             padding: 10px;
             border-radius: 6px;
         }
+        .nav-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 10px;
+            margin-bottom: 20px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px var(--card-shadow);
+        }
+
+        .nav-header a {
+            color: var(--link-color);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-header a:hover {
+            background: var(--link-hover);
+            color: white;
+        }
+
+        .nav-header a.active {
+            background: var(--link-color);
+            color: white;
+        }
     </style>
 </head>
 <body>
+    <div class="nav-header">
+        <a href="/zupport/">Home</a>
+        <a href="/zupport/status.html" class="active">Status</a>
+        <a href="/zupport/logs.html">Logs</a>
+        <a href="/zupport/api-docs">API</a>
+    </div>
     <div id="restartModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
