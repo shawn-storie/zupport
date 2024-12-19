@@ -16,8 +16,9 @@
             --fishtag-text: #b388ff;
             --card-bg: #2c3e50;
             --card-shadow: rgba(0, 0, 0, 0.1);
-            --link-color: #34495e;
-            --link-hover: #2c3e50;
+            --link-color: #3498db;
+            --link-hover: #2980b9;
+            --link-text: #ffffff;
         }
 
         .nav-header {
@@ -32,21 +33,24 @@
         }
 
         .nav-header a {
-            color: var(--link-color);
+            color: var(--link-text);
             text-decoration: none;
             padding: 8px 16px;
             border-radius: 6px;
             transition: all 0.2s ease;
+            opacity: 0.7;
         }
 
         .nav-header a:hover {
             background: var(--link-hover);
-            color: white;
+            color: var(--link-text);
+            opacity: 1;
         }
 
         .nav-header a.active {
             background: var(--link-color);
-            color: white;
+            color: var(--link-text);
+            opacity: 1;
         }
 
         body {
