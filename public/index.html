@@ -28,6 +28,7 @@
             padding: 20px;
             background: var(--bg-color);
             color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .header {
@@ -87,9 +88,65 @@
             line-height: 1.6;
             margin-bottom: 20px;
         }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--card-shadow);
+            transform: scale(1.1);
+        }
     </style>
+    <script>
+        // Check if user prefers dark mode
+        function prefersDarkMode() {
+            return window.matchMedia && 
+                   window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        // Watch for system theme changes
+        function watchSystemTheme() {
+            window.matchMedia('(prefers-color-scheme: dark)')
+                .addEventListener('change', event => {
+                    if (!localStorage.getItem('theme')) {  // Only auto-switch if user hasn't manually set theme
+                        document.body.setAttribute('data-theme', event.matches ? 'dark' : 'light');
+                    }
+                });
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Set initial theme from localStorage or system preference
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || (prefersDarkMode() ? 'dark' : 'light');
+            document.body.setAttribute('data-theme', savedTheme);
+            watchSystemTheme();
+        });
+    </script>
 </head>
 <body>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        🌓
+    </button>
     <div class="header">
         <h1>Zupport System Management</h1>
     </div>
