@@ -484,9 +484,9 @@ router.get('/status', async (req, res) => {
             <h4>Queue Status</h4>
             <div class="queue-summary">
               <p>
-                Total Files: <span class="metric-value">${status.queues.totals.xml + status.queues.totals.pdf}</span>
-                <span class="file-type-badge xml">XML: ${status.queues.totals.xml}</span>
-                <span class="file-type-badge pdf">PDF: ${status.queues.totals.pdf}</span>
+                Total Files: <span class="metric-value">${queueStatus.totals.xml + queueStatus.totals.pdf}</span>
+                <span class="file-type-badge xml">XML: ${queueStatus.totals.xml}</span>
+                <span class="file-type-badge pdf">PDF: ${queueStatus.totals.pdf}</span>
               </p>
             </div>
             ${status.queues.map(queue => `
