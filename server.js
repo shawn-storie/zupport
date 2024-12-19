@@ -8,7 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const fsp = require('fs').promises;
 const checkDiskSpace = require('check-disk-space').default;
-const { exec } = require('child_process');
+const { exec, execSync } = require('child_process');
 const { version } = require('./version');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yaml');
@@ -185,10 +185,63 @@ router.get('/version', async (req, res) => {
   }
 });
 
+// Add these helper functions at the top
+function getMemoryDetails() {
+  try {
+    const meminfo = execSync('cat /proc/meminfo').toString();
+    const memFree = meminfo.match(/MemFree:\s+(\d+)/)?.[1] || 0;
+    const swapFree = meminfo.match(/SwapFree:\s+(\d+)/)?.[1] || 0;
+    return { memFree, swapFree };
+  } catch (error) {
+    return { memFree: 0, swapFree: 0 };
+  }
+}
+
+function getDiskDetails() {
+  try {
+    const df = execSync('df -k').toString();
+    return df.split('\n')
+      .slice(1) // Skip header
+      .filter(line => line.trim())
+      .map(line => {
+        const [filesystem, blocks, used, available, capacity, mountpoint] = line.split(/\s+/);
+        return { filesystem, blocks, used, available, capacity, mountpoint };
+      });
+  } catch (error) {
+    return [];
+  }
+}
+
+function getTomcatStatus() {
+  try {
+    // Assuming Tomcat manager is accessible
+    const response = execSync('curl -s http://localhost:8080/manager/status?XML=true').toString();
+    // Parse XML response - you might want to use an XML parser here
+    const jvmFree = response.match(/free="(\d+)"/)?.[1] || 0;
+    const jvmTotal = response.match(/total="(\d+)"/)?.[1] || 0;
+    const jvmMax = response.match(/max="(\d+)"/)?.[1] || 0;
+    const currentThreads = response.match(/currentThreadCount="(\d+)"/)?.[1] || 0;
+    const maxTime = response.match(/maxTime="(\d+)"/)?.[1] || 0;
+    
+    return {
+      jvm: { free: jvmFree, total: jvmTotal, max: jvmMax },
+      connector: { currentThreads, maxTime }
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+// Update the status endpoint
 router.get('/status', async (req, res) => {
   try {
     const diskSpace = await checkDiskSpace('/');
+    const memDetails = getMemoryDetails();
+    const diskDetails = getDiskDetails();
+    const tomcatStatus = getTomcatStatus();
+    
     const status = {
+      timestamp: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }),
       system: {
         hostname: os.hostname(),
         platform: os.platform(),
@@ -196,18 +249,28 @@ router.get('/status', async (req, res) => {
         cpus: os.cpus().length,
         uptime: os.uptime(),
         loadavg: os.loadavg(),
+        thresholds: {
+          load: [2.8, 5.0, 8.0],
+          threads: [30, 120, 300]
+        }
       },
       memory: {
         total: os.totalmem(),
         free: os.freemem(),
         used: os.totalmem() - os.freemem(),
         process: process.memoryUsage(),
+        details: {
+          memFree: `${memDetails.memFree} kB`,
+          swapFree: `${memDetails.swapFree} kB`
+        }
       },
       disk: {
         total: diskSpace.size,
         free: diskSpace.free,
         used: diskSpace.size - diskSpace.free,
+        filesystems: diskDetails
       },
+      tomcat: tomcatStatus,
       process: {
         pid: process.pid,
         version: process.version,
@@ -216,49 +279,54 @@ router.get('/status', async (req, res) => {
     };
 
     if (req.headers['hx-request']) {
-      // Return HTMX response
+      // Update the HTMX response to include new sections
       res.send(`
         <div class="status-container">
-          <h3>System Status</h3>
+          <h3>System Status for ${status.system.hostname}</h3>
+          
           <div class="status-section">
             <h4>System Information</h4>
             <p>Hostname: <span class="metric-value">${status.system.hostname}</span></p>
             <p>Platform: <span class="metric-value">${status.system.platform} (${status.system.arch})</span></p>
             <p>CPUs: <span class="metric-value">${status.system.cpus}</span></p>
             <p>Load Average: <span class="metric-value">${status.system.loadavg.map(load => load.toFixed(2)).join(', ')}</span></p>
-            <p>Uptime: <span class="metric-value">${Math.floor(status.system.uptime / 3600)} hours</span></p>
+            <p>Load Thresholds: <span class="metric-value">${status.system.thresholds.load.join(', ')}</span></p>
           </div>
           
           <div class="status-section">
             <h4>Memory Usage</h4>
-            <p>Memory Usage
+            <p>System Memory
               <span class="progress-text">${Math.round((status.memory.used / status.memory.total) * 100)}%</span>
               <span data-progress="${(status.memory.used / status.memory.total) * 100}"></span>
             </p>
-            <p>Heap Usage
-              <span class="progress-text">${Math.round((status.memory.process.heapUsed / status.memory.process.heapTotal) * 100)}%</span>
-              <span data-progress="${(status.memory.process.heapUsed / status.memory.process.heapTotal) * 100}"></span>
-            </p>
+            <p>MemFree: <span class="metric-value">${status.memory.details.memFree}</span></p>
+            <p>SwapFree: <span class="metric-value">${status.memory.details.swapFree}</span></p>
           </div>
           
           <div class="status-section">
             <h4>Disk Usage</h4>
-            <p>Disk Usage
-              <span class="progress-text">${Math.round((status.disk.used / status.disk.total) * 100)}%</span>
-              <span data-progress="${(status.disk.used / status.disk.total) * 100}"></span>
-            </p>
+            ${status.disk.filesystems.map(fs => `
+              <p>${fs.filesystem} (${fs.mountpoint})
+                <span class="progress-text">${fs.capacity}</span>
+                <span data-progress="${parseInt(fs.capacity)}"></span>
+              </p>
+            `).join('')}
           </div>
           
+          ${status.tomcat ? `
           <div class="status-section">
-            <h4>Process Information</h4>
-            <p>PID: <span class="metric-value">${status.process.pid}</span></p>
-            <p>Node Version: <span class="metric-value">${status.process.version}</span></p>
-            <p>Uptime: <span class="metric-value">${Math.floor(status.process.uptime / 60)} minutes</span></p>
+            <h4>Tomcat Status</h4>
+            <p>JVM Memory
+              <span class="progress-text">${Math.round(((status.tomcat.jvm.total - status.tomcat.jvm.free) / status.tomcat.jvm.total) * 100)}%</span>
+              <span data-progress="${((status.tomcat.jvm.total - status.tomcat.jvm.free) / status.tomcat.jvm.total) * 100}"></span>
+            </p>
+            <p>Current Threads: <span class="metric-value">${status.tomcat.connector.currentThreads}</span></p>
+            <p>Max Response Time: <span class="metric-value">${status.tomcat.connector.maxTime}ms</span></p>
           </div>
+          ` : ''}
         </div>
       `);
     } else {
-      // Return JSON response
       res.json(status);
     }
   } catch (error) {
