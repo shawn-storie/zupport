@@ -176,12 +176,25 @@ router.get('/server-stats', async (req, res) => {
 });
 
 router.get('/version', async (req, res) => {
-  // Return HTML for HTMX requests
+  const hostname = os.hostname();
+  const env = hostname.startsWith('dv') ? 'Development' :
+              hostname.startsWith('sb') ? 'Sandbox' :
+              hostname.startsWith('zp') ? 'Production' : 'Unknown';
+  
   if (req.headers['hx-request']) {
-    res.send(`<div>API Version: ${version}</div>`);
+    res.send(`
+      <div class="version-info">
+        <span class="version">v${version}</span>
+        <span class="server">${hostname}</span>
+        <span class="env-pill ${env.toLowerCase()}">${env}</span>
+      </div>
+    `);
   } else {
-    // Return JSON for API requests
-    res.json({ version });
+    res.json({ 
+      version,
+      server: hostname,
+      environment: env
+    });
   }
 });
 
