@@ -378,7 +378,8 @@ function getServiceStatus() {
         name: 'tomcat9', 
         versionCmd: "java -cp /usr/share/tomcat9/lib/catalina.jar org.apache.catalina.util.ServerInfo | grep 'Server version' | cut -d'/' -f2",
         threadCmd: "ps -L -p $(systemctl show -p MainPID tomcat9 | cut -d= -f2) | wc -l",
-        uptimeCmd: "systemctl show -p ActiveEnterTimestamp --value tomcat9 | xargs -I{} date -d {} +%s"
+        uptimeCmd: "systemctl show -p ActiveEnterTimestamp --value tomcat9 | xargs -I{} date -d {} +%s",
+        warFilesCmd: "ls -1 /var/lib/tomcat9/webapps/*.war 2>/dev/null || true"
       },
       { 
         name: 'nodered', 
@@ -407,40 +408,49 @@ function getServiceStatus() {
       };
     }
 
-    const serviceStatus = services.map(({ name, versionCmd, threadCmd, uptimeCmd }) => {
+    const serviceStatus = services.map(({ name, versionCmd, threadCmd, uptimeCmd, warFilesCmd }) => {
       try {
         const status = execSync(`systemctl is-active ${name}`).toString().trim();
-        const memory = execSync(`ps -o rss= -p $(systemctl show -p MainPID ${name} | cut -d= -f2)`).toString().trim();
-        const cpu = execSync(`ps -o %cpu= -p $(systemctl show -p MainPID ${name} | cut -d= -f2)`).toString().trim();
+        let memory = 0;
+        let cpu = 0;
         let version = execSync(versionCmd).toString().trim();
         let threads = threadCmd ? parseInt(execSync(threadCmd).toString().trim()) : null;
         let uptime = null;
+        let warFiles = [];
         
         if (uptimeCmd && status === 'active') {
           const startTime = parseInt(execSync(uptimeCmd).toString().trim());
           const now = Math.floor(Date.now() / 1000);
           uptime = now - startTime;
         }
+        
+        if (warFilesCmd && status === 'active') {
+          warFiles = execSync(warFilesCmd).toString()
+            .trim()
+            .split('\n')
+            .filter(f => f)
+            .map(f => path.basename(f));
+        }
+
+        if (status === 'active') {
+          const pid = execSync(`systemctl show -p MainPID ${name} | cut -d= -f2`).toString().trim();
+          const processStats = execSync(`ps -p ${pid} -o %mem,%cpu`).toString().split('\n')[1].trim().split(/\s+/);
+          memory = parseFloat(processStats[0]) * totalMemory / 100;
+          cpu = parseFloat(processStats[1]);
+        }
 
         return {
           name,
           status,
-          memory: parseInt(memory),
-          cpu: parseFloat(cpu),
+          memory,
+          cpu,
           version,
           threads,
-          uptime
+          uptime,
+          warFiles
         };
       } catch (error) {
-        return {
-          name,
-          status: 'inactive',
-          memory: 0,
-          cpu: 0,
-          version: null,
-          threads: null,
-          uptime: null
-        };
+        return { name, status: 'inactive', memory: 0, cpu: 0, version: 'unknown' };
       }
     }).concat([sprkzStatus]);
 
@@ -606,6 +616,15 @@ router.get('/status', async (req, res) => {
               <div class="progress-wrapper">
                 <div class="progress-bar" style="width: ${((status.tomcat.jvm.total - status.tomcat.jvm.free) / status.tomcat.jvm.total) * 100}%"></div>
               </div>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Deployed Wars</span>
+              <span class="metric-value">
+                ${status.tomcat.warFiles.length ? 
+                  status.tomcat.warFiles.map(war => `<span class="war-badge">${war}</span>`).join(' ') :
+                  'No war files'
+                }
+              </span>
             </div>
           </div>
           ` : ''}
