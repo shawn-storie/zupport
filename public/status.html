@@ -104,7 +104,7 @@
         }
         .metric-row {
             display: grid;
-            grid-template-columns: minmax(150px, 1fr) auto minmax(200px, 2fr);
+            grid-template-columns: minmax(200px, 1.5fr) minmax(150px, 1fr) minmax(200px, 1fr);
             align-items: center;
             gap: 15px;
             margin: 10px 0;
@@ -114,12 +114,16 @@
             color: var(--text-color);
             font-weight: 500;
             opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .metric-value {
             font-weight: 600;
             color: var(--text-color);
             text-align: right;
             white-space: nowrap;
+            min-width: 150px;
         }
         .progress-wrapper {
             background: #ecf0f1;
@@ -242,8 +246,10 @@
             padding: 2px 8px;
             border-radius: 4px;
             font-size: 0.85em;
-            margin: 0 4px;
+            margin: 0 2px;
             font-weight: 500;
+            min-width: 60px;
+            text-align: center;
         }
         .file-type-badge.xml {
             background: #e3f2fd;
@@ -257,6 +263,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            justify-content: flex-end;
         }
         .disk-summary {
             margin-bottom: 15px;
