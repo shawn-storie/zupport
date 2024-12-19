@@ -512,7 +512,7 @@ router.get('/status', async (req, res) => {
             ${status.queues.map(queue => `
               <div class="metric-row ${queue.status !== 'healthy' ? queue.status : ''}">
                 <span class="metric-label" title="Thresholds: ${queue.thresholds.files.join(', ')} files">
-                  ${queue.path.split('/').slice(-2).join('/')}
+                  ${queue.path.split('/').pop()}
                 </span>
                 <span class="metric-value">
                   ${queue.exists ? 
