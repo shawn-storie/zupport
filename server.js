@@ -375,6 +375,28 @@ function getServiceStatus() {
   try {
     // Get systemd service status for key services
     const services = ['tomcat9', 'nodered', 'nginx'];
+    // Get Sprkz status
+    let sprkzStatus = null;
+    try {
+      const sprkzResponse = execSync('curl -s http://localhost:3010/api/v1/endpoint').toString();
+      const sprkz = JSON.parse(sprkzResponse);
+      if (sprkz.success) {
+        sprkzStatus = {
+          name: 'Sprkz',
+          status: 'active',
+          version: sprkz.version,
+          views: sprkz.views
+        };
+      }
+    } catch (error) {
+      sprkzStatus = {
+        name: 'Sprkz',
+        status: 'inactive',
+        version: null,
+        views: 0
+      };
+    }
+
     const serviceStatus = services.map(service => {
       try {
         const status = execSync(`systemctl is-active ${service}`).toString().trim();
@@ -395,7 +417,7 @@ function getServiceStatus() {
           cpu: 0
         };
       }
-    });
+    }).concat([sprkzStatus]);
 
     // Get top processes by CPU and memory
     const topProcesses = execSync(`ps -eo pid,ppid,%cpu,%mem,comm --sort=-%cpu | head -n 6`).toString()
@@ -574,7 +596,10 @@ router.get('/status', async (req, res) => {
                     `<span class="service-status inactive" title="Service is not running">●</span>`}
                   ${svc.status === 'active' ? 
                     `<span class="resource-usage">
-                      CPU: ${svc.cpu.toFixed(1)}% | MEM: ${Math.round(svc.memory / 1024)}MB
+                      ${svc.name === 'Sprkz' ? 
+                        `v${svc.version} (${svc.views} views)` :
+                        `CPU: ${svc.cpu.toFixed(1)}% | MEM: ${Math.round(svc.memory / 1024)}MB`
+                      }
                     </span>` : 
                     ''}
                 </span>
