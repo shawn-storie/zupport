@@ -381,11 +381,11 @@ function getServiceStatus() {
       },
       { 
         name: 'nodered', 
-        versionCmd: "node-red --version | cut -d' ' -f1,2" 
+        versionCmd: "systemctl show nodered -p ExecStart --value | grep -o 'node-red@[0-9.]*' | cut -d'@' -f2"
       },
       { 
         name: 'java', 
-        versionCmd: "java --version | head -n1 | cut -d' ' -f2" 
+        versionCmd: "java -version 2>&1 | head -n1 | cut -d'\"' -f2"
       }
     ];
     // Get Sprkz status
@@ -410,7 +410,7 @@ function getServiceStatus() {
 
     const serviceStatus = services.map(({ name, versionCmd }) => {
       try {
-        const status = execSync(`systemctl is-active ${name}`).toString().trim();
+        const status = name === 'java' ? 'active' : execSync(`systemctl is-active ${name}`).toString().trim();
         const memory = execSync(`ps -o rss= -p $(systemctl show -p MainPID ${name} | cut -d= -f2)`).toString().trim();
         const cpu = execSync(`ps -o %cpu= -p $(systemctl show -p MainPID ${name} | cut -d= -f2)`).toString().trim();
         let version = execSync(versionCmd).toString().trim();
