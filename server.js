@@ -292,6 +292,29 @@ async function getQueueStatus() {
   for (const queue of queueConfigs) {
     try {
       const files = await fsp.readdir(queue.path).catch(() => []);
+      let oldestFile = null;
+      let oldestTime = null;
+
+      // Check each file's creation time
+      if (files.length > 0) {
+        for (const file of files) {
+          const filePath = path.join(queue.path, file);
+          try {
+            const stats = await fsp.stat(filePath);
+            if (!oldestTime || stats.ctime < oldestTime) {
+              oldestTime = stats.ctime;
+              oldestFile = {
+                name: file,
+                created: stats.ctime
+              };
+            }
+          } catch (error) {
+            // Skip files we can't stat
+            continue;
+          }
+        }
+      }
+
       const count = files.length;
       totalFiles += count;
 
@@ -304,6 +327,7 @@ async function getQueueStatus() {
         path: queue.path,
         exists: files !== null,
         count,
+        oldestFile,
         thresholds: queue.thresholds,
         status
       });
@@ -463,6 +487,11 @@ router.get('/status', async (req, res) => {
                   ${queue.status !== 'healthy' ? 
                     `<span class="warning-badge" title="${queue.status.toUpperCase()}: ${queue.count} files">⚠️</span>` : 
                     ''}
+                  ${queue.oldestFile ? 
+                    `<span class="age-badge" title="Oldest: ${queue.oldestFile.name}">
+                      ${formatAge(queue.oldestFile.created)}
+                    </span>` : 
+                    ''}
                 </span>
                 <div class="progress-wrapper ${queue.status}">
                   <div class="progress-bar" style="width: ${Math.min(100, (queue.count / queue.thresholds.files[2]) * 100)}%"></div>
@@ -521,3 +550,15 @@ wss.on('connection', (ws, req) => {
 server.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server running on 0.0.0.0:${PORT}`);
 }); 
+
+function formatAge(date) {
+  const now = new Date();
+  const diff = now - date;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days}d`;
+  if (hours > 0) return `${hours}h`;
+  return `${minutes}m`;
+} 
