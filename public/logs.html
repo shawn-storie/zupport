@@ -192,7 +192,7 @@
         let generating = false;
         let debugging = false;
 
-        const logPattern = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(\w+)\s+([^-]+?)\s*-\s*(.+)$/;
+        const logPattern = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(\w+)\s+([^\s-]+)\s*-\s*(.+)$/;
 
         function connect() {
             const logFile = document.getElementById('logFile').value;
