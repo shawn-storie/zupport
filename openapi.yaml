@@ -124,3 +124,23 @@ paths:
       responses:
         '101':
           description: Switching protocols to WebSocket
+
+  /status:
+    get:
+      summary: Get detailed system status
+      responses:
+        '200':
+          description: System status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  system:
+                    type: object
+                  memory:
+                    type: object
+                  disk:
+                    type: object
+                  process:
+                    type: object

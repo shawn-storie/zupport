@@ -46,27 +46,39 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
    npm install
    ```
 
-3. Configure environment:
+3. Set up environment configuration:
    ```bash
-   # Copy example environment file
+   # Copy the example environment file
    cp .env.example .env
    
-   # Edit .env with your settings
-   nano .env
+   # Edit the .env file with your settings
+   # For example, to monitor Tomcat logs:
+   ZUPPORT_LOG_DIR=/var/log/tomcat9
+   ZUPPORT_EDITABLE_DIR=/path/to/editable/files
+   PORT=4111
+   LOG_LEVEL=info
+   CONSOLE_LOGGING=true
    ```
 
-4. Environment variables can also be set directly:
+4. Start the development server with auto-reload:
    ```bash
-   export ZUPPORT_LOG_DIR=/path/to/logs
-   export ZUPPORT_EDITABLE_DIR=/path/to/editable/files
-   export PORT=4111
-   export LOG_LEVEL=info
-   export CONSOLE_LOGGING=true
+   # Install nodemon globally if you haven't already
+   npm install -g nodemon
+   
+   # Start the server in a screen session
+   ./start.sh
    ```
 
-4. Start the server:
+5. Useful commands:
    ```bash
-   npm start
+   # View server logs
+   screen -r zupport
+   
+   # Detach from screen
+   # Press Ctrl+A, then D
+   
+   # Stop the server
+   screen -X -S zupport quit
    ```
 
 ### AWS Deployment Configuration

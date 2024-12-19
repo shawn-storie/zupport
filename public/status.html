@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Status</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .status-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        h4 {
+            color: #34495e;
+            margin: 0 0 10px 0;
+        }
+        p {
+            margin: 5px 0;
+            color: #555;
+        }
+        .refresh-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .refresh-button:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <button class="refresh-button"
+            hx-get="/zupport/status"
+            hx-target="#status-content"
+            hx-trigger="click, every 30s">
+        Refresh Status
+    </button>
+    
+    <div id="status-content"
+         hx-get="/zupport/status"
+         hx-trigger="load">
+        Loading...
+    </div>
+</body>
+</html> 

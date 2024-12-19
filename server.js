@@ -12,6 +12,7 @@ const { exec } = require('child_process');
 const { version } = require('./version');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yaml');
+const os = require('os');
 
 // Environment variables configuration with default values
 const PORT = process.env.PORT || 4111;
@@ -60,6 +61,9 @@ const openApiSpec = YAML.parse(fs.readFileSync('./openapi.yaml', 'utf8'));
 app.use(BASE_PATH, express.json());
 app.use(`${BASE_PATH}/api-docs`, swaggerUi.serve, swaggerUi.setup(openApiSpec));
 app.use(BASE_PATH, router);
+
+// Add after other middleware
+app.use(BASE_PATH, express.static('public'));
 
 // Move all routes to router
 router.get('/health', (req, res) => {
@@ -178,6 +182,83 @@ router.get('/version', async (req, res) => {
   } else {
     // Return JSON for API requests
     res.json({ version });
+  }
+});
+
+router.get('/status', async (req, res) => {
+  try {
+    const diskSpace = await checkDiskSpace('/');
+    const status = {
+      system: {
+        hostname: os.hostname(),
+        platform: os.platform(),
+        arch: os.arch(),
+        cpus: os.cpus().length,
+        uptime: os.uptime(),
+        loadavg: os.loadavg(),
+      },
+      memory: {
+        total: os.totalmem(),
+        free: os.freemem(),
+        used: os.totalmem() - os.freemem(),
+        process: process.memoryUsage(),
+      },
+      disk: {
+        total: diskSpace.size,
+        free: diskSpace.free,
+        used: diskSpace.size - diskSpace.free,
+      },
+      process: {
+        pid: process.pid,
+        version: process.version,
+        uptime: process.uptime(),
+      }
+    };
+
+    if (req.headers['hx-request']) {
+      // Return HTMX response
+      res.send(`
+        <div class="status-container">
+          <h3>System Status</h3>
+          <div class="status-section">
+            <h4>System</h4>
+            <p>Hostname: ${status.system.hostname}</p>
+            <p>Platform: ${status.system.platform} (${status.system.arch})</p>
+            <p>CPUs: ${status.system.cpus}</p>
+            <p>Load Average: ${status.system.loadavg.map(load => load.toFixed(2)).join(', ')}</p>
+            <p>Uptime: ${Math.floor(status.system.uptime / 3600)} hours</p>
+          </div>
+          
+          <div class="status-section">
+            <h4>Memory</h4>
+            <p>Total: ${Math.round(status.memory.total / 1024 / 1024)} MB</p>
+            <p>Free: ${Math.round(status.memory.free / 1024 / 1024)} MB</p>
+            <p>Used: ${Math.round(status.memory.used / 1024 / 1024)} MB</p>
+            <p>Process Heap: ${Math.round(status.memory.process.heapUsed / 1024 / 1024)} MB</p>
+          </div>
+          
+          <div class="status-section">
+            <h4>Disk</h4>
+            <p>Total: ${Math.round(status.disk.total / 1024 / 1024 / 1024)} GB</p>
+            <p>Free: ${Math.round(status.disk.free / 1024 / 1024 / 1024)} GB</p>
+            <p>Used: ${Math.round(status.disk.used / 1024 / 1024 / 1024)} GB</p>
+          </div>
+          
+          <div class="status-section">
+            <h4>Process</h4>
+            <p>PID: ${status.process.pid}</p>
+            <p>Node Version: ${status.process.version}</p>
+            <p>Uptime: ${Math.floor(status.process.uptime / 60)} minutes</p>
+          </div>
+        </div>
+      `);
+    } else {
+      // Return JSON response
+      res.json(status);
+    }
+  } catch (error) {
+    logger.error('Error getting system status:', error);
+    res.status(500).json({ error: 'Failed to get system status' });
   }
 });
 
