@@ -374,7 +374,11 @@ async function getQueueStatus() {
 function getServiceStatus() {
   try {
     // Get systemd service status for key services
-    const services = ['tomcat9', 'nodered', 'nginx'];
+    const services = [
+      { name: 'tomcat9', versionCmd: "java -cp /usr/share/tomcat9/lib/catalina.jar org.apache.catalina.util.ServerInfo | grep 'Server version' | cut -d'/' -f2" },
+      { name: 'nodered', versionCmd: "node-red --version" },
+      { name: 'java', versionCmd: "java -version 2>&1 | head -n 1 | cut -d'\"' -f2" }
+    ];
     // Get Sprkz status
     let sprkzStatus = null;
     try {
@@ -384,37 +388,38 @@ function getServiceStatus() {
         sprkzStatus = {
           name: 'Sprkz',
           status: 'active',
-          version: sprkz.version,
-          views: sprkz.views
+          version: sprkz.version
         };
       }
     } catch (error) {
       sprkzStatus = {
         name: 'Sprkz',
         status: 'inactive',
-        version: null,
-        views: 0
+        version: null
       };
     }
 
-    const serviceStatus = services.map(service => {
+    const serviceStatus = services.map(({ name, versionCmd }) => {
       try {
-        const status = execSync(`systemctl is-active ${service}`).toString().trim();
-        const memory = execSync(`ps -o rss= -p $(systemctl show -p MainPID ${service} | cut -d= -f2)`).toString().trim();
-        const cpu = execSync(`ps -o %cpu= -p $(systemctl show -p MainPID ${service} | cut -d= -f2)`).toString().trim();
+        const status = execSync(`systemctl is-active ${name}`).toString().trim();
+        const memory = execSync(`ps -o rss= -p $(systemctl show -p MainPID ${name} | cut -d= -f2)`).toString().trim();
+        const cpu = execSync(`ps -o %cpu= -p $(systemctl show -p MainPID ${name} | cut -d= -f2)`).toString().trim();
+        const version = execSync(versionCmd).toString().trim();
         
         return {
-          name: service,
+          name,
           status,
           memory: parseInt(memory),
-          cpu: parseFloat(cpu)
+          cpu: parseFloat(cpu),
+          version
         };
       } catch (error) {
         return {
-          name: service,
+          name,
           status: 'inactive',
           memory: 0,
-          cpu: 0
+          cpu: 0,
+          version: null
         };
       }
     }).concat([sprkzStatus]);
@@ -597,8 +602,8 @@ router.get('/status', async (req, res) => {
                   ${svc.status === 'active' ? 
                     `<span class="resource-usage">
                       ${svc.name === 'Sprkz' ? 
-                        `v${svc.version} (${svc.views} views)` :
-                        `CPU: ${svc.cpu.toFixed(1)}% | MEM: ${Math.round(svc.memory / 1024)}MB`
+                        `v${svc.version}` :
+                        `v${svc.version || 'unknown'} | CPU: ${svc.cpu.toFixed(1)}% | MEM: ${Math.round(svc.memory / 1024)}MB`
                       }
                     </span>` : 
                     ''}
