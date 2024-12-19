@@ -184,7 +184,7 @@ router.get('/version', async (req, res) => {
   const hostname = os.hostname();
   const env = hostname.startsWith('dv') ? 'Development' :
               hostname.startsWith('sb') ? 'Sandbox' :
-              hostname.startsWith('zp') ? 'Production' : 'Unknown';
+              hostname.startsWith('zp') ? 'Production' : 'Other';
   
   if (req.headers['hx-request']) {
     res.send(`
