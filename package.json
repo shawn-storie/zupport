@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "nodemon --watch '*.js' --watch 'public/*.html' server.js",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "generate-version": "echo \"module.exports = { version: '\"$npm_package_version\"' };\" > version.js"
