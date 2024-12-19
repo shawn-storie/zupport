@@ -617,6 +617,17 @@ router.get('/status', async (req, res) => {
                       }
                     </span>` : 
                     ''}
+                  ${svc.name !== 'Sprkz' ? 
+                    `<button class="restart-button" 
+                            onclick="restartService('${svc.name}')" 
+                            title="Restart ${svc.name}">
+                      🔄
+                    </button>` :
+                    `<button class="restart-button disabled" 
+                            title="Restart not available">
+                      🔄
+                    </button>`
+                  }
                 </span>
               </div>
             `).join('')}
