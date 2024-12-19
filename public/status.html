@@ -63,9 +63,11 @@
             font-weight: 500;
         }
         .status-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto;
         }
         .status-section {
             background: var(--card-bg);
@@ -73,9 +75,6 @@
             border-radius: 12px;
             box-shadow: 0 2px 4px var(--card-shadow);
             transition: all 0.3s ease;
-            overflow: hidden;
-            width: 100%;
-            height: fit-content;
         }
         .status-section:hover {
             transform: translateY(-2px);
@@ -107,13 +106,11 @@
         }
         .metric-row {
             display: grid;
-            grid-template-columns: minmax(250px, 2fr) minmax(200px, 1fr) minmax(150px, 1fr);
+            grid-template-columns: 300px 1fr 150px;
             align-items: center;
             gap: 10px;
             margin: 10px 0;
             padding: 5px 0;
-            width: 100%;
-            overflow: hidden;
         }
         .metric-label {
             color: var(--text-color);
@@ -122,7 +119,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 250px;
+            max-width: 300px;
             display: inline-block;
             vertical-align: middle;
         }
@@ -131,7 +128,7 @@
             color: var(--text-color);
             text-align: right;
             white-space: nowrap;
-            min-width: 180px;
+            min-width: auto;
         }
         .progress-wrapper {
             background: #ecf0f1;
@@ -139,8 +136,7 @@
             overflow: hidden;
             height: 12px;
             position: relative;
-            min-width: 100px;
-            max-width: 120px;
+            width: 100%;
             margin-left: auto;
         }
         .progress-bar {
