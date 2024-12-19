@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zupport Log Viewer</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --error-color: #ff6b6b;
+            --warn-color: #ffd76b;
+            --info-color: #6bff9e;
+            --debug-color: #6bb5ff;
+            --trace-color: #d6b5ff;
+            --fishtag-bg: #2d1b4d;
+            --fishtag-text: #b388ff;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Fira Code', 'Consolas', monospace;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #controls {
+            padding: 10px;
+            background: #2c3e50;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #terminal {
+            flex: 1;
+            background: #000;
+            border-radius: 8px;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .terminal-line {
+            display: flex;
+            align-items: baseline;
+            padding: 2px 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .timestamp {
+            color: #666;
+            margin-right: 10px;
+            user-select: none;
+        }
+
+        .fishtag {
+            background: var(--fishtag-bg);
+            color: var(--fishtag-text);
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin: 0 4px;
+            cursor: pointer;
+        }
+
+        .level {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin: 0 4px;
+        }
+
+        .level.ERROR { color: var(--error-color); }
+        .level.WARN { color: var(--warn-color); }
+        .level.INFO { color: var(--info-color); }
+        .level.DEBUG { color: var(--debug-color); }
+        .level.TRACE { color: var(--trace-color); }
+
+        .thread {
+            color: #666;
+            margin: 0 4px;
+        }
+
+        .component {
+            color: #888;
+            margin: 0 4px;
+        }
+
+        #status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        #status.connected {
+            background: #27ae60;
+            color: white;
+        }
+
+        #status.disconnected {
+            background: #c0392b;
+            color: white;
+        }
+
+        select, button {
+            background: #34495e;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        select:hover, button:hover {
+            background: #2c3e50;
+        }
+
+        .highlight {
+            background: var(--fishtag-bg);
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <select id="logFile">
+            <option value="catalina.out">catalina.out</option>
+            <option value="not-catalina.out">not-catalina.out</option>
+        </select>
+        <select id="logLevel">
+            <option value="">All Levels</option>
+            <option value="ERROR">ERROR</option>
+            <option value="WARN">WARN</option>
+            <option value="INFO">INFO</option>
+            <option value="DEBUG">DEBUG</option>
+            <option value="TRACE">TRACE</option>
+        </select>
+        <button onclick="clearLogs()">Clear</button>
+        <button onclick="toggleScroll()">Toggle Auto-scroll</button>
+    </div>
+    <div id="terminal"></div>
+    <div id="status" class="disconnected">Disconnected</div>
+
+    <script>
+        let ws = null;
+        let autoScroll = true;
+        let activeFilters = new Set();
+        let lineBuffer = [];
+        const MAX_LINES = 1000;
+
+        const logPattern = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(\w+)\s+([^\s-]+)\s*-\s*(.+)$/;
+
+        function connect() {
+            const logFile = document.getElementById('logFile').value;
+            const logLevel = document.getElementById('logLevel').value;
+            const url = `wss://${window.location.host}/zupport/ws?log=${logFile}${logLevel ? `&level=${logLevel}` : ''}`;
+            
+            ws = new WebSocket(url);
+            
+            ws.onopen = () => {
+                document.getElementById('status').className = 'connected';
+                document.getElementById('status').textContent = 'Connected';
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('status').className = 'disconnected';
+                document.getElementById('status').textContent = 'Disconnected';
+                setTimeout(connect, 5000);
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                parseLine(data.message);
+            };
+        }
+
+        function parseLine(line) {
+            const match = line.match(logPattern);
+            if (!match) {
+                appendRawLine(line);
+                return;
+            }
+
+            const [, timestamp, fishtag, thread, level, component, message] = match;
+            appendParsedLine({ timestamp, fishtag, thread, level, component, message });
+        }
+
+        function appendParsedLine(parts) {
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            
+            const timestamp = document.createElement('span');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = parts.timestamp;
+            
+            const fishtag = document.createElement('span');
+            fishtag.className = 'fishtag';
+            fishtag.textContent = parts.fishtag;
+            fishtag.onclick = () => highlightFishtag(parts.fishtag);
+            
+            const thread = document.createElement('span');
+            thread.className = 'thread';
+            thread.textContent = parts.thread;
+            
+            const level = document.createElement('span');
+            level.className = `level ${parts.level}`;
+            level.textContent = parts.level;
+            
+            const component = document.createElement('span');
+            component.className = 'component';
+            component.textContent = parts.component;
+            
+            const message = document.createElement('span');
+            message.className = 'message';
+            message.textContent = parts.message;
+            
+            line.append(timestamp, fishtag, thread, level, component, message);
+            appendLine(line);
+        }
+
+        function appendRawLine(text) {
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.textContent = text;
+            appendLine(line);
+        }
+
+        function appendLine(line) {
+            const terminal = document.getElementById('terminal');
+            terminal.appendChild(line);
+            lineBuffer.push(line);
+            
+            if (lineBuffer.length > MAX_LINES) {
+                terminal.removeChild(lineBuffer.shift());
+            }
+            
+            if (autoScroll) {
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('terminal').innerHTML = '';
+            lineBuffer = [];
+        }
+
+        function toggleScroll() {
+            autoScroll = !autoScroll;
+        }
+
+        function highlightFishtag(fishtag) {
+            document.querySelectorAll('.terminal-line').forEach(line => {
+                if (line.querySelector(`.fishtag[data-tag="${fishtag}"]`)) {
+                    line.classList.add('highlight');
+                } else {
+                    line.classList.remove('highlight');
+                }
+            });
+        }
+
+        // Event listeners
+        document.getElementById('logFile').onchange = () => {
+            ws?.close();
+            clearLogs();
+            connect();
+        };
+
+        document.getElementById('logLevel').onchange = () => {
+            ws?.close();
+            clearLogs();
+            connect();
+        };
+
+        // Initial connection
+        connect();
+    </script>
+</body>
+</html> 
