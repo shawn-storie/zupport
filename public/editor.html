@@ -208,6 +208,41 @@
             background: var(--link-hover);
         }
 
+        .tree-toolbar {
+            display: flex;
+            gap: 10px;
+        }
+
+        .refresh-tree-button {
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .refresh-tree-button:hover {
+            background: var(--card-shadow);
+        }
+
+        .refresh-tree-button.spinning {
+            pointer-events: none;
+        }
+
+        .refresh-tree-button.spinning::after {
+            content: '🔄';
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -306,6 +341,7 @@
         <div class="file-tree">
             <div class="tree-toolbar">
                 <button class="new-file-button" onclick="showNewFileModal()">New File</button>
+                <button class="refresh-tree-button" onclick="refreshFileTree()" title="Refresh file list">🔄</button>
             </div>
             <div id="file-tree"></div>
         </div>
@@ -402,6 +438,12 @@
             try {
                 const response = await fetch('/zupport/editable-files');
                 const data = await response.json();
+                
+                // Destroy existing tree if it exists
+                const tree = $('#file-tree');
+                if (tree.jstree(true)) {
+                    tree.jstree('destroy');
+                }
                 
                 $('#file-tree').jstree({
                     core: {
@@ -515,7 +557,7 @@
                 if (response.ok) {
                     showStatus('File created successfully', 'success');
                     hideNewFileModal();
-                    await loadFileTree();
+                    await refreshFileTree();
                     loadFile(fileName);
                 } else {
                     showStatus('Failed to create file', 'error');
@@ -531,6 +573,13 @@
                 createNewFile();
             }
         });
+
+        async function refreshFileTree() {
+            const button = document.querySelector('.refresh-tree-button');
+            button.classList.add('spinning');
+            await loadFileTree();
+            setTimeout(() => button.classList.remove('spinning'), 1000);
+        }
     </script>
 </body>
 </html> 
