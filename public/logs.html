@@ -237,25 +237,26 @@
             const fishtag = document.createElement('span');
             fishtag.className = 'fishtag';
             fishtag.textContent = parts.fishtag;
+            fishtag.setAttribute('data-tag', parts.fishtag);
             fishtag.onclick = () => highlightFishtag(parts.fishtag);
             
             const thread = document.createElement('span');
             thread.className = 'thread';
-            thread.textContent = parts.thread;
+            thread.textContent = `[${parts.thread}]`;
             
             const level = document.createElement('span');
-            level.className = `level ${parts.level}`;
+            level.className = `level ${parts.level.toUpperCase()}`;
             level.textContent = parts.level;
             
             const component = document.createElement('span');
             component.className = 'component';
-            component.textContent = parts.component;
+            component.textContent = `${parts.component} -`;
             
             const message = document.createElement('span');
             message.className = 'message';
             message.textContent = parts.message;
             
-            line.append(timestamp, fishtag, thread, level, component, message);
+            line.append(timestamp, '[', fishtag, ']', thread, level, component, message);
             appendLine(line);
         }
 
