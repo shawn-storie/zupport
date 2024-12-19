@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zupport - System Management</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --text-color: #2c3e50;
+            --card-bg: white;
+            --card-shadow: rgba(0,0,0,0.1);
+            --link-color: #3498db;
+            --link-hover: #2980b9;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+            --card-shadow: rgba(0,0,0,0.3);
+            --link-color: #5dade2;
+            --link-hover: #3498db;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        .nav-link {
+            background: var(--card-bg);
+            color: var(--link-color);
+            text-decoration: none;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px var(--card-shadow);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--card-shadow);
+            background: var(--link-color);
+            color: white;
+        }
+
+        .content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px var(--card-shadow);
+            margin-top: 40px;
+        }
+
+        .content h2 {
+            color: var(--text-color);
+            margin-top: 0;
+        }
+
+        .content p {
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Zupport System Management</h1>
+    </div>
+
+    <div class="nav-links">
+        <a href="/zupport/status" class="nav-link">
+            📊 System Status
+        </a>
+        <a href="/zupport/api-docs" class="nav-link">
+            📚 API Documentation
+        </a>
+    </div>
+
+    <div class="content">
+        <h2>About Zupport</h2>
+        <p>
+            Zupport is a comprehensive system management tool that provides real-time monitoring 
+            and control of critical system components including:
+        </p>
+        <ul>
+            <li>Service status monitoring (Tomcat, Node-RED, Sprkz)</li>
+            <li>Queue monitoring with threshold alerts</li>
+            <li>System resource usage tracking</li>
+            <li>Disk space monitoring</li>
+            <li>Service management capabilities</li>
+        </ul>
+
+        <h2>Features</h2>
+        <ul>
+            <li>Real-time system status dashboard</li>
+            <li>Service restart capabilities</li>
+            <li>Queue monitoring with file counts and age tracking</li>
+            <li>RESTful API for system management</li>
+            <li>Dark/Light theme support</li>
+        </ul>
+    </div>
+</body>
+</html> 
