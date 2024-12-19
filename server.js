@@ -65,6 +65,11 @@ app.use(BASE_PATH, router);
 // Add after other middleware
 app.use(BASE_PATH, express.static('public'));
 
+// Serve common navigation
+router.get('/common-nav.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'common-nav.html'));
+});
+
 // Move all routes to router
 router.get('/health', (req, res) => {
   res.json({

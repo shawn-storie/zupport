@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Zupport File Editor</title>
+    <title>File Editor</title>
+    <script src="/zupport/js/common.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
@@ -348,13 +349,7 @@
     <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
         🌓
     </button>
-    <div class="nav-header">
-        <a href="/zupport/">Home</a>
-        <a href="/zupport/status.html">Status</a>
-        <a href="/zupport/logs.html">Logs</a>
-        <a href="/zupport/editor.html" class="active">Editor</a>
-        <a href="/zupport/api-docs">API</a>
-    </div>
+    <div id="nav-container"></div>
 
     <div class="editor-container">
         <div class="file-tree">
