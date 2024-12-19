@@ -186,6 +186,108 @@
             background: var(--card-shadow);
             transform: scale(1.1);
         }
+
+        .tree-toolbar {
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .new-file-button {
+            background: var(--link-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .new-file-button:hover {
+            background: var(--link-hover);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px var(--card-shadow);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-buttons button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-buttons button.primary {
+            background: var(--link-color);
+            color: white;
+        }
+
+        .modal-buttons button:not(.primary) {
+            background: var(--card-shadow);
+            color: var(--text-color);
+        }
     </style>
 </head>
 <body>
@@ -201,7 +303,12 @@
     </div>
 
     <div class="editor-container">
-        <div class="file-tree" id="file-tree"></div>
+        <div class="file-tree">
+            <div class="tree-toolbar">
+                <button class="new-file-button" onclick="showNewFileModal()">New File</button>
+            </div>
+            <div id="file-tree"></div>
+        </div>
         <div class="editor-wrapper">
             <div class="editor-toolbar">
                 <span class="current-file" id="current-file">No file selected</span>
@@ -211,6 +318,25 @@
         </div>
     </div>
     <div id="status-message"></div>
+
+    <div id="newFileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New File</h3>
+                <button class="modal-close" onclick="hideNewFileModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="newFileName">File Name:</label>
+                    <input type="text" id="newFileName" placeholder="example.js">
+                </div>
+                <div class="modal-buttons">
+                    <button onclick="hideNewFileModal()">Cancel</button>
+                    <button onclick="createNewFile()" class="primary">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Check if user prefers dark mode
@@ -358,6 +484,53 @@
             };
             return languageMap[ext] || 'plaintext';
         }
+
+        function showNewFileModal() {
+            document.getElementById('newFileModal').style.display = 'flex';
+            document.getElementById('newFileName').focus();
+        }
+
+        function hideNewFileModal() {
+            document.getElementById('newFileModal').style.display = 'none';
+            document.getElementById('newFileName').value = '';
+        }
+
+        async function createNewFile() {
+            const fileName = document.getElementById('newFileName').value.trim();
+            if (!fileName) {
+                showStatus('Please enter a file name', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/zupport/edit-file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filePath: fileName,
+                        content: ''
+                    })
+                });
+
+                if (response.ok) {
+                    showStatus('File created successfully', 'success');
+                    hideNewFileModal();
+                    await loadFileTree();
+                    loadFile(fileName);
+                } else {
+                    showStatus('Failed to create file', 'error');
+                }
+            } catch (error) {
+                showStatus('Failed to create file', 'error');
+            }
+        }
+
+        // Add keyboard handler for the new file modal
+        document.getElementById('newFileName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                createNewFile();
+            }
+        });
     </script>
 </body>
 </html> 
