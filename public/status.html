@@ -272,17 +272,21 @@
             position: fixed;
             top: 20px;
             right: 20px;
+            z-index: 1000;
             background: none;
             border: none;
             font-size: 24px;
             cursor: pointer;
             padding: 10px;
             border-radius: 50%;
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px var(--card-shadow);
             transition: background-color 0.3s ease;
         }
 
         .theme-toggle:hover {
             background: var(--card-shadow);
+            transform: scale(1.1);
         }
     </style>
 </head>
