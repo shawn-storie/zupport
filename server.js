@@ -381,12 +381,12 @@ function getServiceStatus() {
       },
       { 
         name: 'nodered', 
-        versionCmd: "node-red --version 2>/dev/null || node-red -v 2>/dev/null || echo unknown"
+        versionCmd: "node-red --version 2>/dev/null | cut -d' ' -f1 || echo unknown"
       },
-      { 
-        name: 'java', 
-        versionCmd: "java -version 2>&1 | head -n1 | cut -d'\"' -f2"
-      }
+      {
+        name: 'nodejs',
+        versionCmd: "node -v"
+      },
     ];
     // Get Sprkz status
     let sprkzStatus = null;
@@ -617,8 +617,9 @@ router.get('/status', async (req, res) => {
                     `<span class="resource-usage">
                       ${svc.name === 'Sprkz' ? 
                         `v${svc.version}` :
-                        `v${svc.version || 'unknown'} | CPU: ${svc.cpu.toFixed(1)}% | MEM: ${Math.round(svc.memory / 1024)}MB`
-                      }
+                        `${svc.name === 'nodejs' ? 'v' : ''}${svc.version || 'unknown'}${svc.name !== 'nodejs' ? 
+                          ` | CPU: ${svc.cpu.toFixed(1)}% | MEM: ${Math.round(svc.memory / 1024)}MB` : ''}`
+                        }
                     </span>` : 
                     ''}
                 </span>
