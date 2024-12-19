@@ -375,9 +375,18 @@ function getServiceStatus() {
   try {
     // Get systemd service status for key services
     const services = [
-      { name: 'tomcat9', versionCmd: "java -cp /usr/share/tomcat9/lib/catalina.jar org.apache.catalina.util.ServerInfo | grep 'Server version' | cut -d'/' -f2" },
-      { name: 'nodered', versionCmd: "node-red --version" },
-      { name: 'java', versionCmd: "java -version 2>&1 | head -n 1 | cut -d'\"' -f2" }
+      { 
+        name: 'tomcat9', 
+        versionCmd: "java -cp /usr/share/tomcat9/lib/catalina.jar org.apache.catalina.util.ServerInfo | grep 'Server version' | cut -d'/' -f2" 
+      },
+      { 
+        name: 'nodered', 
+        versionCmd: "node-red --version | cut -d' ' -f1,2" 
+      },
+      { 
+        name: 'java', 
+        versionCmd: "java --version | head -n1 | cut -d' ' -f2" 
+      }
     ];
     // Get Sprkz status
     let sprkzStatus = null;
@@ -404,7 +413,12 @@ function getServiceStatus() {
         const status = execSync(`systemctl is-active ${name}`).toString().trim();
         const memory = execSync(`ps -o rss= -p $(systemctl show -p MainPID ${name} | cut -d= -f2)`).toString().trim();
         const cpu = execSync(`ps -o %cpu= -p $(systemctl show -p MainPID ${name} | cut -d= -f2)`).toString().trim();
-        const version = execSync(versionCmd).toString().trim();
+        let version = execSync(versionCmd).toString().trim();
+        
+        // Clean up version strings
+        if (name === 'nodered') {
+          version = version.replace('v', '');  // Remove 'v' prefix
+        }
         
         return {
           name,
