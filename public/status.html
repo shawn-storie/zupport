@@ -4,13 +4,48 @@
     <title>System Status</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --text-color: #2c3e50;
+            --card-bg: white;
+            --card-shadow: rgba(0,0,0,0.1);
+            --border-color: #e0e0e0;
+            --progress-bg: #ecf0f1;
+            --queue-healthy: #e8f5e9;
+            --queue-tired: #fff9c4;
+            --queue-sick: #ffe0b2;
+            --queue-dead: #ffcdd2;
+            --xml-badge-bg: #e3f2fd;
+            --xml-badge-color: #1976d2;
+            --pdf-badge-bg: #fbe9e7;
+            --pdf-badge-color: #d84315;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #ecf0f1;
+            --card-bg: #2c3e50;
+            --card-shadow: rgba(0,0,0,0.3);
+            --border-color: #34495e;
+            --progress-bg: #34495e;
+            --queue-healthy: #1b5e20;
+            --queue-tired: #f57f17;
+            --queue-sick: #e65100;
+            --queue-dead: #b71c1c;
+            --xml-badge-bg: #0d47a1;
+            --xml-badge-color: #bbdefb;
+            --pdf-badge-bg: #bf360c;
+            --pdf-badge-color: #ffccbc;
+        }
+
         body {
             font-family: system-ui, -apple-system, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background: #f5f5f5;
-            color: #2c3e50;
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         .page-header {
             text-align: center;
@@ -33,10 +68,10 @@
             gap: 20px;
         }
         .status-section {
-            background: white;
+            background: var(--card-bg);
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px var(--card-shadow);
             transition: all 0.3s ease;
         }
         .status-section:hover {
@@ -233,9 +268,28 @@
             margin: 0;
             font-weight: 500;
         }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--card-shadow);
+        }
     </style>
 </head>
 <body>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        🌓
+    </button>
     <button class="refresh-button"
             hx-get="/zupport/status"
             hx-target="#status-content"
@@ -248,6 +302,20 @@
          hx-trigger="load">
         Loading...
     </div>
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Set initial theme from localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+        });
+    </script>
 </body>
-</html> 
 </html> 
