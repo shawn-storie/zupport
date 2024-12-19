@@ -197,24 +197,26 @@
         function connect() {
             const logFile = document.getElementById('logFile').value;
             const logLevel = document.getElementById('logLevel').value;
-            const url = `wss://${window.location.host}/zupport/ws?log=${logFile}${logLevel ? `&level=${logLevel}` : ''}`;
+            const url = `ws${window.location.protocol === 'https:' ? 's' : ''}://${window.location.host}/zupport/ws?log=${logFile}${logLevel ? `&level=${logLevel}` : ''}`;
             
             ws = new WebSocket(url);
             
             ws.onopen = () => {
                 document.getElementById('status').className = 'connected';
                 document.getElementById('status').textContent = 'Connected';
+                debug('Connected to', { url });
             };
             
             ws.onclose = () => {
                 document.getElementById('status').className = 'disconnected';
                 document.getElementById('status').textContent = 'Disconnected';
+                debug('Connection closed, reconnecting in 5s');
                 setTimeout(connect, 5000);
             };
             
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                console.log('WebSocket received:', data);
+                debug('WebSocket received', data);
                 parseLine(data.message);
             };
         }
