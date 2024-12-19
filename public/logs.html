@@ -240,7 +240,13 @@
         function connect() {
             const logFile = document.getElementById('logFile').value;
             const logLevel = document.getElementById('logLevel').value;
-            const url = `ws${window.location.protocol === 'https:' ? 's' : ''}://${window.location.host}/zupport/ws?log=${logFile}${logLevel ? `&level=${logLevel}` : ''}`;
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const wsUrl = `${wsProtocol}://${window.location.host}/zupport/ws`;
+            const params = new URLSearchParams({
+                log: logFile,
+                ...(logLevel && { level: logLevel })
+            });
+            const url = `${wsUrl}?${params.toString()}`;
             
             ws = new WebSocket(url);
             
