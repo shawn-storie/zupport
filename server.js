@@ -780,7 +780,7 @@ router.post('/logs/generate', async (req, res) => {
     
     logGenerator = setInterval(async () => {
       const { value } = await generator.next();
-      await fs.appendFile(logFile, value);
+      await fsp.appendFile(logFile, value);
     }, 500);
     
     res.json({ status: 'started' });
