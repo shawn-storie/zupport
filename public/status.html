@@ -73,6 +73,9 @@
             border-radius: 12px;
             box-shadow: 0 2px 4px var(--card-shadow);
             transition: all 0.3s ease;
+            overflow: hidden;
+            width: 100%;
+            height: fit-content;
         }
         .status-section:hover {
             transform: translateY(-2px);
@@ -106,9 +109,11 @@
             display: grid;
             grid-template-columns: minmax(250px, 2fr) minmax(200px, 1fr) minmax(150px, 1fr);
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             margin: 10px 0;
             padding: 5px 0;
+            width: 100%;
+            overflow: hidden;
         }
         .metric-label {
             color: var(--text-color);
@@ -135,7 +140,7 @@
             height: 12px;
             position: relative;
             min-width: 100px;
-            max-width: 150px;
+            max-width: 120px;
             margin-left: auto;
         }
         .progress-bar {
@@ -254,8 +259,9 @@
             font-size: 0.85em;
             margin: 0 2px;
             font-weight: 500;
-            min-width: 50px;
+            min-width: 45px;
             text-align: center;
+            white-space: nowrap;
         }
         .file-type-badge.xml {
             background: #e3f2fd;
@@ -268,8 +274,10 @@
         .file-count {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
             justify-content: flex-end;
+            flex-wrap: nowrap;
+            min-width: 0;
         }
         .disk-summary {
             margin-bottom: 15px;
