@@ -132,25 +132,33 @@
 
         #status-message {
             position: fixed;
-            bottom: 20px;
+            top: 80px;
             right: 20px;
             padding: 10px 20px;
             border-radius: 4px;
             font-size: 14px;
             transition: all 0.3s ease;
             opacity: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 8px var(--card-shadow);
         }
 
         #status-message.success {
             background: #27ae60;
             color: white;
             opacity: 1;
+            transform: translateX(0);
         }
 
         #status-message.error {
             background: #c0392b;
             color: white;
             opacity: 1;
+            transform: translateX(0);
+        }
+
+        #status-message:not(.success):not(.error) {
+            transform: translateX(100%);
         }
     </style>
 </head>
