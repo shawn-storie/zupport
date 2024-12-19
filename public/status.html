@@ -142,6 +142,34 @@
         .loading {
             animation: pulse 1s infinite;
         }
+        .queues .metric-row {
+            font-size: 0.9em;
+        }
+        .queues .metric-row.tired .progress-bar {
+            background: linear-gradient(90deg, #f1c40f, #f39c12);
+        }
+        .queues .metric-row.sick .progress-bar {
+            background: linear-gradient(90deg, #e67e22, #d35400);
+        }
+        .queues .metric-row.dead .progress-bar {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+        .queues .metric-row.tired {
+            background: #fff9c4;
+        }
+        .queues .metric-row.sick {
+            background: #ffe0b2;
+        }
+        .queues .metric-row.dead {
+            background: #ffcdd2;
+        }
+        .queue-summary {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 6px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>

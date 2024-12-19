@@ -262,13 +262,72 @@ function getOSDetails() {
   }
 }
 
+const queueConfigs = [
+  { path: '/zpdata/agents/zippi/outgoing', thresholds: { files: [100, 500, 1000], minutes: [10, 15, 20] } },
+  { path: '/zpdata/agents/shipit/outgoing', thresholds: { files: [100, 500, 1000], minutes: [10, 15, 20] } },
+  { path: '/zpdata/agents/faxit/outgoing', thresholds: { files: [100, 500, 1000], minutes: [10, 15, 20] } },
+  { path: '/zpdata/incoming/outboundMessage', thresholds: { files: [100, 500, 1000], minutes: [3, 6, 10] } },
+  { path: '/zpdata/incoming/captured', thresholds: { files: [100, 500, 1000], minutes: [3, 6, 10] } },
+  { path: '/zpdata/incoming/outgoing', thresholds: { files: [100, 500, 1000], minutes: [3, 6, 10] } },
+  { path: '/zpdata/incoming/routed', thresholds: { files: [100, 500, 1000], minutes: [3, 6, 10] } },
+  { path: '/zpdata/incoming/sftp', thresholds: { files: [100, 500, 1000], minutes: [3, 6, 10] } },
+  { path: '/zpdata/incoming/smtp', thresholds: { files: [100, 500, 1000], minutes: [3, 6, 10] } },
+  { path: '/zpdata/incoming/venali', thresholds: { files: [100, 500, 1000], minutes: [3, 6, 10] } },
+  { path: '/zpdata/incoming/zpaper', thresholds: { files: [100, 500, 1000], minutes: [3, 6, 10] } },
+  { path: '/zpdata/agents/emailToFaxAgent/errors', thresholds: { files: [2, 5, 10], minutes: [1, 2, 3] } },
+  { path: '/zpdata/agents/faxOutAgent/errors', thresholds: { files: [2, 5, 10], minutes: [1, 3, 0] } },
+  { path: '/zpdata/agents/outboundMessageAgent/errors', thresholds: { files: [2, 5, 10], minutes: [1, 3, 0] } },
+  { path: '/zpdata/agents/routeAgent/errors', thresholds: { files: [2, 5, 10], minutes: [1, 3, 0] } },
+  { path: '/zpdata/agents/routeAgentSFTP/errors', thresholds: { files: [2, 5, 10], minutes: [1, 3, 0] } },
+  { path: '/zpdata/incoming/sftp/errors', thresholds: { files: [2, 5, 10], minutes: [1, 3, 0] } },
+  { path: '/zpdata/logs/errors', thresholds: { files: [2, 5, 10], minutes: [1, 3, 0] } },
+  { path: '/zpdata/cache', thresholds: { files: [2, 5, 10], minutes: [60, 0, 0] } },
+  { path: '/zpdata/queues/S3/errors', thresholds: { files: [0, 0, 0], minutes: [1, 3, 5] } }
+];
+
+async function getQueueStatus() {
+  const queues = [];
+  let totalFiles = 0;
+
+  for (const queue of queueConfigs) {
+    try {
+      const files = await fsp.readdir(queue.path).catch(() => []);
+      const count = files.length;
+      totalFiles += count;
+
+      const status = count === 0 ? 'healthy' : 
+                    count >= queue.thresholds.files[2] ? 'dead' :
+                    count >= queue.thresholds.files[1] ? 'sick' :
+                    count >= queue.thresholds.files[0] ? 'tired' : 'healthy';
+
+      queues.push({
+        path: queue.path,
+        exists: files !== null,
+        count,
+        thresholds: queue.thresholds,
+        status
+      });
+    } catch (error) {
+      queues.push({
+        path: queue.path,
+        exists: false,
+        count: 0,
+        thresholds: queue.thresholds,
+        status: 'unknown'
+      });
+    }
+  }
+
+  return { queues, totalFiles };
+}
+
 // Update the status endpoint
 router.get('/status', async (req, res) => {
   try {
     const diskSpace = await checkDiskSpace('/');
     const memDetails = getMemoryDetails();
     const diskDetails = getDiskDetails();
-    const tomcatStatus = getTomcatStatus();
+    const queueStatus = await getQueueStatus();
     const osDetails = getOSDetails();
     
     const status = {
@@ -302,12 +361,13 @@ router.get('/status', async (req, res) => {
         used: diskSpace.size - diskSpace.free,
         filesystems: diskDetails
       },
-      tomcat: tomcatStatus,
       process: {
         pid: process.pid,
         version: process.version,
         uptime: process.uptime(),
-      }
+      },
+      queues: queueStatus.queues,
+      totalQueueFiles: queueStatus.totalFiles
     };
 
     if (req.headers['hx-request']) {
@@ -387,6 +447,29 @@ router.get('/status', async (req, res) => {
             </div>
           </div>
           ` : ''}
+          
+          <div class="status-section queues">
+            <h4>Queue Status</h4>
+            <div class="queue-summary">
+              <p>Total Files in Queues: <span class="metric-value">${status.totalQueueFiles}</span></p>
+            </div>
+            ${status.queues.map(queue => `
+              <div class="metric-row ${queue.status !== 'healthy' ? queue.status : ''}">
+                <span class="metric-label" title="Thresholds: ${queue.thresholds.files.join(', ')} files">
+                  ${queue.path.split('/').slice(-2).join('/')}
+                </span>
+                <span class="metric-value">
+                  ${queue.exists ? queue.count : '❌'}
+                  ${queue.status !== 'healthy' ? 
+                    `<span class="warning-badge" title="${queue.status.toUpperCase()}: ${queue.count} files">⚠️</span>` : 
+                    ''}
+                </span>
+                <div class="progress-wrapper ${queue.status}">
+                  <div class="progress-bar" style="width: ${Math.min(100, (queue.count / queue.thresholds.files[2]) * 100)}%"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       `);
     } else {
