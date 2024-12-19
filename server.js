@@ -232,6 +232,36 @@ function getTomcatStatus() {
   }
 }
 
+function getOSDetails() {
+  try {
+    // Read OS-release file
+    const osRelease = fs.readFileSync('/etc/os-release', 'utf8');
+    const name = osRelease.match(/NAME="(.+)"/)?.[1];
+    const version = osRelease.match(/VERSION="?([^"\n]+)"?/)?.[1];
+    const isAmazonLinux = name?.includes('Amazon Linux');
+    
+    // Get the latest version from AWS (this is a simplified check)
+    const latestVersion = '2023';
+    const isLatest = version?.includes(latestVersion);
+
+    return {
+      name,
+      version,
+      isAmazonLinux,
+      isLatest,
+      status: isAmazonLinux && isLatest ? 'current' : 'outdated'
+    };
+  } catch (error) {
+    return {
+      name: 'Unknown',
+      version: 'Unknown',
+      isAmazonLinux: false,
+      isLatest: false,
+      status: 'unknown'
+    };
+  }
+}
+
 // Update the status endpoint
 router.get('/status', async (req, res) => {
   try {
@@ -239,6 +269,7 @@ router.get('/status', async (req, res) => {
     const memDetails = getMemoryDetails();
     const diskDetails = getDiskDetails();
     const tomcatStatus = getTomcatStatus();
+    const osDetails = getOSDetails();
     
     const status = {
       timestamp: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }),
@@ -246,6 +277,7 @@ router.get('/status', async (req, res) => {
         hostname: os.hostname(),
         platform: os.platform(),
         arch: os.arch(),
+        os: osDetails,
         cpus: os.cpus().length,
         uptime: os.uptime(),
         loadavg: os.loadavg(),
@@ -288,6 +320,15 @@ router.get('/status', async (req, res) => {
             <div class="metric-row">
               <span class="metric-label">Hostname</span>
               <span class="metric-value">${status.system.hostname}</span>
+            </div>
+            <div class="metric-row ${status.system.os.status !== 'current' ? 'warning-row' : ''}">
+              <span class="metric-label">Operating System</span>
+              <span class="metric-value">
+                ${status.system.os.name} ${status.system.os.version}
+                ${status.system.os.status !== 'current' ? 
+                  '<span class="warning-badge" title="System not running latest Amazon Linux">⚠️</span>' : 
+                  '<span class="success-badge" title="System running latest Amazon Linux">✓</span>'}
+              </span>
             </div>
             <div class="metric-row">
               <span class="metric-label">Platform</span>
