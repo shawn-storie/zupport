@@ -381,7 +381,7 @@ function getServiceStatus() {
       },
       { 
         name: 'nodered', 
-        versionCmd: "systemctl show nodered -p ExecStart --value | grep -o 'node-red@[0-9.]*' | cut -d'@' -f2"
+        versionCmd: "node-red --version 2>/dev/null || node-red -v 2>/dev/null || echo unknown"
       },
       { 
         name: 'java', 
