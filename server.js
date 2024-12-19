@@ -412,8 +412,11 @@ router.get('/status', async (req, res) => {
 
     if (req.headers['hx-request']) {
       res.send(`
+        <div class="page-header">
+          <h1>System Status</h1>
+          <h2>${status.system.hostname}</h2>
+        </div>
         <div class="status-container">
-          <h3>System Status for ${status.system.hostname}</h3>
           
           <div class="status-section">
             <h4>System Information</h4>
