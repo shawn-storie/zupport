@@ -199,7 +199,7 @@ function getMemoryDetails() {
 
 function getDiskDetails() {
   try {
-    const df = execSync('df -k').toString();
+    const df = execSync('df -h').toString();
     return df.split('\n')
       .slice(1) // Skip header
       .filter(line => line.trim())
@@ -208,7 +208,8 @@ function getDiskDetails() {
         return !filesystem.startsWith('tmpfs') && 
                !filesystem.startsWith('devtmpfs') &&
                !filesystem.startsWith('overlay') &&
-               !filesystem.includes('loop');
+               !filesystem.includes('loop') &&
+               !filesystem.startsWith('127.0.0.1');
       })
       .map(line => {
         const [filesystem, blocks, used, available, capacity, mountpoint] = line.split(/\s+/);
@@ -463,6 +464,15 @@ router.get('/status', async (req, res) => {
           
           <div class="status-section">
             <h4>Disk Usage</h4>
+            <div class="disk-summary">
+              <p>Total Free Space: 
+                <span class="metric-value">
+                  ${status.disk.filesystems
+                    .reduce((total, fs) => total + parseFloat(fs.available), 0)
+                    .toFixed(1)}G
+                </span>
+              </p>
+            </div>
             ${status.disk.filesystems.map(fs => `
               <div class="metric-row">
                 <span class="metric-label">${fs.filesystem}</span>
