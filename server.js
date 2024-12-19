@@ -203,6 +203,13 @@ function getDiskDetails() {
     return df.split('\n')
       .slice(1) // Skip header
       .filter(line => line.trim())
+      .filter(line => {
+        const [filesystem] = line.split(/\s+/);
+        return !filesystem.startsWith('tmpfs') && 
+               !filesystem.startsWith('devtmpfs') &&
+               !filesystem.startsWith('overlay') &&
+               !filesystem.includes('loop');
+      })
       .map(line => {
         const [filesystem, blocks, used, available, capacity, mountpoint] = line.split(/\s+/);
         return { filesystem, blocks, used, available, capacity, mountpoint };
