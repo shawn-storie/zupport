@@ -135,20 +135,25 @@
 </head>
 <body>
     <div id="controls">
-        <select id="logFile">
-            <option value="catalina.out">catalina.out</option>
-            <option value="not-catalina.out">not-catalina.out</option>
-        </select>
-        <select id="logLevel">
-            <option value="">All Levels</option>
-            <option value="ERROR">ERROR</option>
-            <option value="WARN">WARN</option>
-            <option value="INFO">INFO</option>
-            <option value="DEBUG">DEBUG</option>
-            <option value="TRACE">TRACE</option>
-        </select>
-        <button onclick="clearLogs()">Clear</button>
-        <button onclick="toggleScroll()">Toggle Auto-scroll</button>
+        <div class="control-group">
+            <select id="logFile">
+                <option value="catalina.out">catalina.out</option>
+                <option value="not-catalina.out">not-catalina.out</option>
+            </select>
+            <select id="logLevel">
+                <option value="">All Levels</option>
+                <option value="ERROR">ERROR</option>
+                <option value="WARN">WARN</option>
+                <option value="INFO">INFO</option>
+                <option value="DEBUG">DEBUG</option>
+                <option value="TRACE">TRACE</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <button onclick="clearLogs()">Clear</button>
+            <button onclick="toggleScroll()">Toggle Auto-scroll</button>
+            <button onclick="toggleLogGeneration()" id="genButton">Start Generator</button>
+        </div>
     </div>
     <div id="terminal"></div>
     <div id="status" class="disconnected">Disconnected</div>
@@ -159,6 +164,7 @@
         let activeFilters = new Set();
         let lineBuffer = [];
         const MAX_LINES = 1000;
+        let generating = false;
 
         const logPattern = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(\w+)\s+([^\s-]+)\s*-\s*(.+)$/;
 
@@ -268,6 +274,27 @@
                     line.classList.remove('highlight');
                 }
             });
+        }
+
+        async function toggleLogGeneration() {
+            const button = document.getElementById('genButton');
+            const action = generating ? 'stop' : 'start';
+            
+            try {
+                const response = await fetch('/zupport/logs/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+                
+                const result = await response.json();
+                if (result.status === action + 'ed') {
+                    generating = !generating;
+                    button.textContent = generating ? 'Stop Generator' : 'Start Generator';
+                }
+            } catch (error) {
+                console.error('Failed to toggle log generation:', error);
+            }
         }
 
         // Event listeners

@@ -767,3 +767,30 @@ function formatAge(date) {
   if (hours > 0) return `${hours}h`;
   return `${minutes}m`;
 } 
+
+let logGenerator = null;
+
+router.post('/logs/generate', async (req, res) => {
+  const { action } = req.body;
+  const logFile = path.join(LOG_DIR, 'not-catalina.out');
+
+  if (action === 'start' && !logGenerator) {
+    const { generateLogs } = require('./logGenerator');
+    const generator = generateLogs();
+    
+    logGenerator = setInterval(async () => {
+      const { value } = await generator.next();
+      await fs.appendFile(logFile, value);
+    }, 500);
+    
+    res.json({ status: 'started' });
+  } 
+  else if (action === 'stop' && logGenerator) {
+    clearInterval(logGenerator);
+    logGenerator = null;
+    res.json({ status: 'stopped' });
+  }
+  else {
+    res.json({ status: 'no change' });
+  }
+}); 
