@@ -287,14 +287,17 @@ const queueConfigs = [
 
 async function getQueueStatus() {
   const queues = [];
-  let totalFiles = 0;
-
+  let totals = { xml: 0, pdf: 0 };
+  
   for (const queue of queueConfigs) {
     try {
-      const files = await fsp.readdir(queue.path).catch(() => []);
+      const allFiles = await fsp.readdir(queue.path).catch(() => []);
+      const xmlFiles = allFiles.filter(file => file.endsWith('.xml'));
+      const pdfFiles = allFiles.filter(file => file.endsWith('.pdf'));
+      const files = [...xmlFiles, ...pdfFiles];
       let oldestFile = null;
       let oldestTime = null;
-
+  
       // Check each file's creation time
       if (files.length > 0) {
         for (const file of files) {
@@ -305,28 +308,33 @@ async function getQueueStatus() {
               oldestTime = stats.ctime;
               oldestFile = {
                 name: file,
-                created: stats.ctime
+                created: stats.ctime,
+                type: file.endsWith('.xml') ? 'XML' : 'PDF'
               };
             }
           } catch (error) {
-            // Skip files we can't stat
             continue;
           }
         }
       }
-
-      const count = files.length;
-      totalFiles += count;
-
-      const status = count === 0 ? 'healthy' : 
-                    count >= queue.thresholds.files[2] ? 'dead' :
-                    count >= queue.thresholds.files[1] ? 'sick' :
-                    count >= queue.thresholds.files[0] ? 'tired' : 'healthy';
-
+  
+      const counts = {
+        xml: xmlFiles.length,
+        pdf: pdfFiles.length,
+        total: files.length
+      };
+      totals.xml += counts.xml;
+      totals.pdf += counts.pdf;
+  
+      const status = counts.total === 0 ? 'healthy' : 
+                    counts.total >= queue.thresholds.files[2] ? 'dead' :
+                    counts.total >= queue.thresholds.files[1] ? 'sick' :
+                    counts.total >= queue.thresholds.files[0] ? 'tired' : 'healthy';
+  
       queues.push({
         path: queue.path,
         exists: files !== null,
-        count,
+        counts,
         oldestFile,
         thresholds: queue.thresholds,
         status
@@ -335,14 +343,14 @@ async function getQueueStatus() {
       queues.push({
         path: queue.path,
         exists: false,
-        count: 0,
+        counts: { xml: 0, pdf: 0, total: 0 },
         thresholds: queue.thresholds,
         status: 'unknown'
       });
     }
   }
-
-  return { queues, totalFiles };
+  
+  return { queues, totals };
 }
 
 // Update the status endpoint
@@ -391,7 +399,7 @@ router.get('/status', async (req, res) => {
         uptime: process.uptime(),
       },
       queues: queueStatus.queues,
-      totalQueueFiles: queueStatus.totalFiles
+      totalQueueFiles: queueStatus.totals.total
     };
 
     if (req.headers['hx-request']) {
@@ -475,7 +483,11 @@ router.get('/status', async (req, res) => {
           <div class="status-section queues">
             <h4>Queue Status</h4>
             <div class="queue-summary">
-              <p>Total Files in Queues: <span class="metric-value">${status.totalQueueFiles}</span></p>
+              <p>
+                Total Files: <span class="metric-value">${status.queues.totals.xml + status.queues.totals.pdf}</span>
+                <span class="file-type-badge xml">XML: ${status.queues.totals.xml}</span>
+                <span class="file-type-badge pdf">PDF: ${status.queues.totals.pdf}</span>
+              </p>
             </div>
             ${status.queues.map(queue => `
               <div class="metric-row ${queue.status !== 'healthy' ? queue.status : ''}">
@@ -483,18 +495,24 @@ router.get('/status', async (req, res) => {
                   ${queue.path.split('/').slice(-2).join('/')}
                 </span>
                 <span class="metric-value">
-                  ${queue.exists ? queue.count : '❌'}
+                  ${queue.exists ? 
+                    `<span class="file-count">
+                      ${queue.counts.total}
+                      <span class="file-type-badge xml" title="XML Files">XML: ${queue.counts.xml}</span>
+                      <span class="file-type-badge pdf" title="PDF Files">PDF: ${queue.counts.pdf}</span>
+                    </span>` : 
+                    '❌'}
                   ${queue.status !== 'healthy' ? 
-                    `<span class="warning-badge" title="${queue.status.toUpperCase()}: ${queue.count} files">⚠️</span>` : 
+                    `<span class="warning-badge" title="${queue.status.toUpperCase()}: ${queue.counts.total} files">⚠️</span>` : 
                     ''}
                   ${queue.oldestFile ? 
-                    `<span class="age-badge" title="Oldest: ${queue.oldestFile.name}">
+                    `<span class="age-badge" title="Oldest ${queue.oldestFile.type}: ${queue.oldestFile.name}">
                       ${formatAge(queue.oldestFile.created)}
                     </span>` : 
                     ''}
                 </span>
                 <div class="progress-wrapper ${queue.status}">
-                  <div class="progress-bar" style="width: ${Math.min(100, (queue.count / queue.thresholds.files[2]) * 100)}%"></div>
+                  <div class="progress-bar" style="width: ${Math.min(100, (queue.counts.total / queue.thresholds.files[2]) * 100)}%"></div>
                 </div>
               </div>
             `).join('')}
