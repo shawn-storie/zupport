@@ -208,12 +208,22 @@ function getDiskDetails() {
         return !filesystem.startsWith('tmpfs') && 
                !filesystem.startsWith('devtmpfs') &&
                !filesystem.startsWith('overlay') &&
-               !filesystem.includes('loop') &&
-               !filesystem.startsWith('127.0.0.1');
+               !filesystem.includes('loop');
       })
       .map(line => {
         const [filesystem, blocks, used, available, capacity, mountpoint] = line.split(/\s+/);
-        return { filesystem, blocks, used, available, capacity, mountpoint };
+        const displayName = filesystem.startsWith('127.0.0.1') ? 
+          `EFS (${mountpoint})` : 
+          filesystem;
+        return { 
+          filesystem: displayName,
+          blocks, 
+          used, 
+          available, 
+          capacity, 
+          mountpoint,
+          isEFS: filesystem.startsWith('127.0.0.1')
+        };
       });
   } catch (error) {
     return [];
@@ -477,7 +487,7 @@ router.get('/status', async (req, res) => {
               </p>
             </div>
             ${status.disk.filesystems.map(fs => `
-              <div class="metric-row">
+              <div class="metric-row ${fs.isEFS ? 'efs' : ''}">
                 <span class="metric-label">${fs.filesystem}</span>
                 <span class="metric-value">${fs.capacity}</span>
                 <div class="progress-wrapper ${parseInt(fs.capacity) > 90 ? 'critical' : parseInt(fs.capacity) > 70 ? 'warning' : ''}">

@@ -11,14 +11,7 @@
             --card-shadow: rgba(0,0,0,0.1);
             --border-color: #e0e0e0;
             --progress-bg: #ecf0f1;
-            --queue-healthy: #e8f5e9;
-            --queue-tired: #fff9c4;
-            --queue-sick: #ffe0b2;
-            --queue-dead: #ffcdd2;
-            --xml-badge-bg: #e3f2fd;
-            --xml-badge-color: #1976d2;
-            --pdf-badge-bg: #fbe9e7;
-            --pdf-badge-color: #d84315;
+            --efs-bg: #e8f5e9;
         }
 
         [data-theme="dark"] {
@@ -28,14 +21,7 @@
             --card-shadow: rgba(0,0,0,0.3);
             --border-color: #404040;
             --progress-bg: #2d2d2d;
-            --queue-healthy: #1b5e20;
-            --queue-tired: #f57f17;
-            --queue-sick: #e65100;
-            --queue-dead: #b71c1c;
-            --xml-badge-bg: #1565c0;
-            --xml-badge-color: #ffffff;
-            --pdf-badge-bg: #d84315;
-            --pdf-badge-color: #ffffff;
+            --efs-bg: rgba(27, 94, 32, 0.2);
         }
 
         body {
@@ -111,6 +97,11 @@
             gap: 10px;
             margin: 10px 0;
             padding: 5px 0;
+        }
+        .metric-row.efs {
+            background: var(--efs-bg);
+            border-radius: 6px;
+            padding: 5px 10px;
         }
         .metric-label {
             color: var(--text-color);
