@@ -373,16 +373,18 @@ async function getQueueStatus() {
 
 function getServiceStatus() {
   try {
-    // Get systemd service status for key services
     const services = [
       { 
         name: 'tomcat9', 
         versionCmd: "java -cp /usr/share/tomcat9/lib/catalina.jar org.apache.catalina.util.ServerInfo | grep 'Server version' | cut -d'/' -f2",
-        threadCmd: "ps -L -p $(systemctl show -p MainPID tomcat9 | cut -d= -f2) | wc -l"
+        threadCmd: "ps -L -p $(systemctl show -p MainPID tomcat9 | cut -d= -f2) | wc -l",
+        uptimeCmd: "systemctl show -p ActiveEnterTimestamp --value tomcat9 | xargs -I{} date -d {} +%s"
       },
       { 
         name: 'nodered', 
-        versionCmd: "node-red --version 2>/dev/null | grep -o 'v[0-9.]*' || echo unknown"
+        versionCmd: "node-red --version 2>/dev/null | grep -o 'v[0-9.]*' || echo unknown",
+        threadCmd: "ps -L -p $(systemctl show -p MainPID nodered | cut -d= -f2) | wc -l",
+        uptimeCmd: "systemctl show -p ActiveEnterTimestamp --value nodered | xargs -I{} date -d {} +%s"
       },
     ];
     // Get Sprkz status
@@ -405,21 +407,29 @@ function getServiceStatus() {
       };
     }
 
-    const serviceStatus = services.map(({ name, versionCmd, threadCmd }) => {
+    const serviceStatus = services.map(({ name, versionCmd, threadCmd, uptimeCmd }) => {
       try {
         const status = execSync(`systemctl is-active ${name}`).toString().trim();
         const memory = execSync(`ps -o rss= -p $(systemctl show -p MainPID ${name} | cut -d= -f2)`).toString().trim();
         const cpu = execSync(`ps -o %cpu= -p $(systemctl show -p MainPID ${name} | cut -d= -f2)`).toString().trim();
         let version = execSync(versionCmd).toString().trim();
         let threads = threadCmd ? parseInt(execSync(threadCmd).toString().trim()) : null;
+        let uptime = null;
         
+        if (uptimeCmd && status === 'active') {
+          const startTime = parseInt(execSync(uptimeCmd).toString().trim());
+          const now = Math.floor(Date.now() / 1000);
+          uptime = now - startTime;
+        }
+
         return {
           name,
           status,
           memory: parseInt(memory),
           cpu: parseFloat(cpu),
           version,
-          threads
+          threads,
+          uptime
         };
       } catch (error) {
         return {
@@ -428,7 +438,8 @@ function getServiceStatus() {
           memory: 0,
           cpu: 0,
           version: null,
-          threads: null
+          threads: null,
+          uptime: null
         };
       }
     }).concat([sprkzStatus]);
@@ -613,7 +624,8 @@ router.get('/status', async (req, res) => {
                       ${svc.name === 'Sprkz' ? 
                         `v${svc.version}` :
                         `${svc.version || 'unknown'} | CPU: ${svc.cpu.toFixed(1)}% | MEM: ${Math.round(svc.memory / 1024)}MB${
-                          svc.threads ? ` | Threads: ${svc.threads}` : ''}`
+                          svc.threads ? ` | Threads: ${svc.threads}` : ''}${
+                          svc.uptime ? ` | Up: ${formatDuration(svc.uptime)}` : ''}`
                       }
                     </span>` : 
                     ''}
@@ -733,6 +745,16 @@ wss.on('connection', (ws, req) => {
 server.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server running on 0.0.0.0:${PORT}`);
 }); 
+
+function formatDuration(seconds) {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
 
 function formatAge(date) {
   const now = new Date();
