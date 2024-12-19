@@ -16,6 +16,7 @@ Zupport API is a comprehensive Node.js-based solution for log streaming, file ed
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
+- [Network Configuration](#network-configuration)
 
 ## Features
 
@@ -325,3 +326,15 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Network Configuration
+
+Zupport is now linked in netmap, which requires specific ALB (Application Load Balancer) configuration:
+
+### ALB Rule Requirements
+- Path Pattern: `/zupport/*`
+- HTTP Host Headers:
+  - `dv186.zpaper.com`
+  - `dv186a.zpaper.com` (required for netmap linking)
+
+This configuration ensures Zupport is accessible through both the primary domain and the netmap-linked domain.
