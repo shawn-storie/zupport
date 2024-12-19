@@ -15,6 +15,7 @@
             --link-color: #3498db;
             --link-hover: #2980b9;
             --link-text: #ffffff;
+            --border-color: #e0e0e0;
         }
 
         [data-theme="dark"] {
@@ -23,6 +24,9 @@
             --card-bg: #1e1e1e;
             --card-shadow: rgba(0,0,0,0.3);
             --border-color: #404040;
+            --link-color: #3498db;
+            --link-hover: #2980b9;
+            --link-text: #ffffff;
         }
 
         body {
@@ -34,6 +38,7 @@
             color: var(--text-color);
             display: flex;
             flex-direction: column;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .nav-header {
@@ -160,9 +165,33 @@
         #status-message:not(.success):not(.error) {
             transform: translateX(100%);
         }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--card-shadow);
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        🌓
+    </button>
     <div class="nav-header">
         <a href="/zupport/">Home</a>
         <a href="/zupport/status.html">Status</a>
@@ -184,6 +213,46 @@
     <div id="status-message"></div>
 
     <script>
+        // Check if user prefers dark mode
+        function prefersDarkMode() {
+            return window.matchMedia && 
+                   window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        // Watch for system theme changes
+        function watchSystemTheme() {
+            window.matchMedia('(prefers-color-scheme: dark)')
+                .addEventListener('change', event => {
+                    if (!localStorage.getItem('theme')) {
+                        document.body.setAttribute('data-theme', event.matches ? 'dark' : 'light');
+                        updateEditorTheme();
+                    }
+                });
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateEditorTheme();
+        }
+
+        function updateEditorTheme() {
+            if (editor) {
+                const isDark = document.body.getAttribute('data-theme') === 'dark';
+                monaco.editor.setTheme(isDark ? 'vs-dark' : 'vs');
+            }
+        }
+
+        // Set initial theme from localStorage or system preference
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || (prefersDarkMode() ? 'dark' : 'light');
+            document.body.setAttribute('data-theme', savedTheme);
+            watchSystemTheme();
+        });
+
         let editor;
         let currentFile = '';
 
@@ -191,7 +260,7 @@
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
         require(['vs/editor/editor.main'], function() {
             editor = monaco.editor.create(document.getElementById('monaco-editor'), {
-                theme: 'vs-dark',
+                theme: document.body.getAttribute('data-theme') === 'dark' ? 'vs-dark' : 'vs',
                 fontSize: 14,
                 minimap: { enabled: true },
                 automaticLayout: true
