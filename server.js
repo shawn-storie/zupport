@@ -371,6 +371,48 @@ async function getQueueStatus() {
   return { queues, totals };
 }
 
+function getServiceStatus() {
+  try {
+    // Get systemd service status for key services
+    const services = ['tomcat9', 'nodered', 'nginx'];
+    const serviceStatus = services.map(service => {
+      try {
+        const status = execSync(`systemctl is-active ${service}`).toString().trim();
+        const memory = execSync(`ps -o rss= -p $(systemctl show -p MainPID ${service} | cut -d= -f2)`).toString().trim();
+        const cpu = execSync(`ps -o %cpu= -p $(systemctl show -p MainPID ${service} | cut -d= -f2)`).toString().trim();
+        
+        return {
+          name: service,
+          status,
+          memory: parseInt(memory),
+          cpu: parseFloat(cpu)
+        };
+      } catch (error) {
+        return {
+          name: service,
+          status: 'inactive',
+          memory: 0,
+          cpu: 0
+        };
+      }
+    });
+
+    // Get top processes by CPU and memory
+    const topProcesses = execSync(`ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%cpu | head -n 6`).toString()
+      .split('\n')
+      .slice(1) // Remove header
+      .filter(line => line.trim())
+      .map(line => {
+        const [pid, ppid, cmd, mem, cpu] = line.trim().split(/\s+/);
+        return { pid, ppid, cmd, mem: parseFloat(mem), cpu: parseFloat(cpu) };
+      });
+
+    return { services: serviceStatus, topProcesses };
+  } catch (error) {
+    return { services: [], topProcesses: [] };
+  }
+}
+
 // Update the status endpoint
 router.get('/status', async (req, res) => {
   try {
@@ -379,6 +421,7 @@ router.get('/status', async (req, res) => {
     const diskDetails = getDiskDetails();
     const queueStatus = await getQueueStatus();
     const osDetails = getOSDetails();
+    const serviceStatus = getServiceStatus();
     
     const status = {
       timestamp: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }),
@@ -417,7 +460,9 @@ router.get('/status', async (req, res) => {
         uptime: process.uptime(),
       },
       queues: queueStatus.queues,
-      totalQueueFiles: queueStatus.totals.total
+      totalQueueFiles: queueStatus.totals.total,
+      services: serviceStatus.services,
+      topProcesses: serviceStatus.topProcesses
     };
 
     if (req.headers['hx-request']) {
@@ -509,6 +554,37 @@ router.get('/status', async (req, res) => {
             </div>
           </div>
           ` : ''}
+          
+          <div class="status-section">
+            <h4>Services</h4>
+            ${status.services.map(svc => `
+              <div class="metric-row">
+                <span class="metric-label">${svc.name}</span>
+                <span class="metric-value">
+                  ${svc.status === 'active' ? 
+                    `<span class="service-status active" title="Service is running">●</span>` : 
+                    `<span class="service-status inactive" title="Service is not running">●</span>`}
+                  ${svc.status === 'active' ? 
+                    `<span class="resource-usage">
+                      CPU: ${svc.cpu.toFixed(1)}% | MEM: ${Math.round(svc.memory / 1024)}MB
+                    </span>` : 
+                    ''}
+                </span>
+              </div>
+            `).join('')}
+            
+            <h4 class="subsection">Top Processes</h4>
+            ${status.topProcesses.map(proc => `
+              <div class="metric-row">
+                <span class="metric-label" title="${proc.cmd}">${proc.cmd.split('/').pop()}</span>
+                <span class="metric-value">
+                  <span class="resource-usage">
+                    CPU: ${proc.cpu.toFixed(1)}% | MEM: ${proc.mem.toFixed(1)}%
+                  </span>
+                </span>
+              </div>
+            `).join('')}
+          </div>
           
           <div class="status-section queues">
             <h4>Queue Status</h4>

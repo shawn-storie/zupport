@@ -322,6 +322,27 @@
         [data-theme="dark"] .disk-summary {
             background: rgba(21, 101, 192, 0.2);
         }
+        .service-status {
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 12px;
+        }
+        .service-status.active {
+            color: #2ecc71;
+        }
+        .service-status.inactive {
+            color: #e74c3c;
+        }
+        .resource-usage {
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.9;
+        }
+        h4.subsection {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
