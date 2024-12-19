@@ -323,6 +323,25 @@
             background: var(--card-shadow);
             color: var(--text-color);
         }
+
+        /* jstree custom styles */
+        .jstree-default .jstree-hovered {
+            background: var(--link-color) !important;
+            color: var(--link-text) !important;
+            box-shadow: none !important;
+        }
+
+        .jstree-default .jstree-clicked {
+            background: var(--link-hover) !important;
+            color: var(--link-text) !important;
+            box-shadow: none !important;
+        }
+
+        [data-theme="dark"] .jstree-default .jstree-node,
+        [data-theme="dark"] .jstree-default .jstree-icon,
+        [data-theme="dark"] .jstree-default .jstree-anchor {
+            color: var(--text-color) !important;
+        }
     </style>
 </head>
 <body>
@@ -445,16 +464,20 @@
                     tree.jstree('destroy');
                 }
                 
-                $('#file-tree').jstree({
+                const jstree = $('#file-tree').jstree({
                     core: {
                         data: data.files.map(file => ({
                             text: file,
+                            id: file,
                             icon: 'jstree-file'
                         }))
                     }
                 }).on('select_node.jstree', function(e, data) {
                     loadFile(data.node.text);
                 });
+
+                // Return the jstree instance for chaining
+                return jstree;
             } catch (error) {
                 showStatus('Failed to load file list', 'error');
             }
@@ -557,8 +580,8 @@
                 if (response.ok) {
                     showStatus('File created successfully', 'success');
                     hideNewFileModal();
+                    currentFile = fileName;
                     await refreshFileTree();
-                    loadFile(fileName);
                 } else {
                     showStatus('Failed to create file', 'error');
                 }
@@ -577,7 +600,13 @@
         async function refreshFileTree() {
             const button = document.querySelector('.refresh-tree-button');
             button.classList.add('spinning');
-            await loadFileTree();
+            const tree = await loadFileTree();
+            if (currentFile) {
+                // Wait for tree to be ready
+                tree.on('ready.jstree', function() {
+                    tree.jstree('select_node', currentFile);
+                });
+            }
             setTimeout(() => button.classList.remove('spinning'), 1000);
         }
     </script>
